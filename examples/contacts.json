@@ -1,0 +1,269 @@
+{
+  "contacts": [
+    {
+      "id": "p1",
+      "name": "Ananya Mehta",
+      "role": "Former finance lead",
+      "company": "RELIANCE",
+      "sector": "Energy & Retail",
+      "tags": [
+        "retail margins",
+        "capital allocation",
+        "cash flow"
+      ],
+      "education": "IIM Ahmedabad",
+      "relationship": "Former colleague",
+      "degree": 1,
+      "links": [
+        "p4"
+      ],
+      "employment": [
+        {
+          "company": "RELIANCE",
+          "role": "Former finance lead",
+          "start": "2018-01-01",
+          "end": "2023-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "What part of the earnings improvement is recurring?"
+    },
+    {
+      "id": "p2",
+      "name": "Rohan Shah",
+      "role": "Enterprise technology advisor",
+      "company": "TCS",
+      "sector": "IT Services",
+      "tags": [
+        "deal conversion",
+        "AI spending",
+        "IT budgets"
+      ],
+      "education": "IIT Kanpur",
+      "relationship": "University acquaintance",
+      "degree": 1,
+      "links": [
+        "p3"
+      ],
+      "employment": [
+        {
+          "company": "TCS",
+          "role": "Enterprise technology advisor",
+          "start": "2016-01-01",
+          "end": "2022-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "Are signed deals converting into revenue as expected?"
+    },
+    {
+      "id": "p3",
+      "name": "Kavya Rao",
+      "role": "Former delivery director",
+      "company": "INFY",
+      "sector": "IT Services",
+      "tags": [
+        "delivery economics",
+        "IT budgets",
+        "margins"
+      ],
+      "education": "IIT Madras",
+      "relationship": "Introduction through Rohan Shah",
+      "degree": 2,
+      "links": [],
+      "employment": [
+        {
+          "company": "INFY",
+          "role": "Former delivery director",
+          "start": "2015-01-01",
+          "end": "2021-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "What is changing in client budgets and project starts?"
+    },
+    {
+      "id": "p4",
+      "name": "Neel Desai",
+      "role": "Telecom strategy specialist",
+      "company": "BHARTIARTL",
+      "sector": "Telecom",
+      "tags": [
+        "ARPU",
+        "5G",
+        "subscriber growth"
+      ],
+      "education": "IIM Ahmedabad",
+      "relationship": "Former colleague",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "BHARTIARTL",
+          "role": "Telecom strategy specialist",
+          "start": "2017-01-01",
+          "end": "2022-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "How sustainable are the recent gains in monetisation?"
+    },
+    {
+      "id": "p5",
+      "name": "Meera Iyer",
+      "role": "Consumer sector operator",
+      "company": "HINDUNILVR",
+      "sector": "Consumer",
+      "tags": [
+        "distribution",
+        "rural demand",
+        "volume growth"
+      ],
+      "education": "IIM Bangalore",
+      "relationship": "Professional acquaintance",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "HINDUNILVR",
+          "role": "Consumer sector operator",
+          "start": "2014-01-01",
+          "end": "2020-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "What are distributors seeing in underlying demand?"
+    },
+    {
+      "id": "p6",
+      "name": "Arjun Sethi",
+      "role": "Former credit risk manager",
+      "company": "HDFCBANK",
+      "sector": "Banking",
+      "tags": [
+        "asset quality",
+        "deposits",
+        "credit risk"
+      ],
+      "education": "IIT Kanpur",
+      "relationship": "Former colleague",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "HDFCBANK",
+          "role": "Former credit risk manager",
+          "start": "2018-01-01",
+          "end": "2024-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "Are credit costs and deposit competition changing?"
+    },
+    {
+      "id": "p7",
+      "name": "Isha Kapoor",
+      "role": "Industrial projects advisor",
+      "company": "LT",
+      "sector": "Industrials",
+      "tags": [
+        "capex",
+        "execution",
+        "working capital"
+      ],
+      "education": "BITS Pilani",
+      "relationship": "Professional acquaintance",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "LT",
+          "role": "Industrial projects advisor",
+          "start": "2016-01-01",
+          "end": "2023-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "How much of the order book is ready for execution?"
+    },
+    {
+      "id": "p8",
+      "name": "Dev Menon",
+      "role": "Specialty chemicals operator",
+      "company": "DEEPAKNTR",
+      "sector": "Chemicals",
+      "tags": [
+        "specialty chemicals",
+        "capacity",
+        "utilisation"
+      ],
+      "education": "IIT Kanpur",
+      "relationship": "University acquaintance",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "DEEPAKNTR",
+          "role": "Specialty chemicals operator",
+          "start": "2019-01-01",
+          "end": "2024-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "What is driving capacity utilisation and pricing?"
+    },
+    {
+      "id": "p9",
+      "name": "Tara Nair",
+      "role": "Former lending product lead",
+      "company": "BAJFINANCE",
+      "sector": "Lending",
+      "tags": [
+        "rural lending",
+        "credit risk",
+        "consumer finance"
+      ],
+      "education": "IIM Lucknow",
+      "relationship": "Professional acquaintance",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "BAJFINANCE",
+          "role": "Former lending product lead",
+          "start": "2017-01-01",
+          "end": "2023-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "Where are underwriting conditions changing?"
+    },
+    {
+      "id": "p10",
+      "name": "Vikram Rao",
+      "role": "Electronics manufacturing advisor",
+      "company": "DIXON",
+      "sector": "Electronics",
+      "tags": [
+        "semiconductors",
+        "electronics",
+        "supply chains"
+      ],
+      "education": "IIT Bombay",
+      "relationship": "Professional acquaintance",
+      "degree": 1,
+      "links": [],
+      "employment": [
+        {
+          "company": "DIXON",
+          "role": "Electronics manufacturing advisor",
+          "start": "2018-01-01",
+          "end": "2023-12-31"
+        }
+      ],
+      "synthetic": true,
+      "question": "Which supply constraints are affecting execution?"
+    }
+  ],
+  "replace": false
+}

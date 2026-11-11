@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+data
+.venv
+.git
+.aws
+.codex
+.agents
+__pycache__
+**/__pycache__
+*.pyc
+dist
