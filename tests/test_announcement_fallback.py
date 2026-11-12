@@ -32,7 +32,7 @@ class AnnouncementFallbackTests(unittest.TestCase):
   today=datetime.now(ZoneInfo('Asia/Kolkata')).strftime('%b %d, %Y')
   html=f'<a href="report.pdf">{today} Consolidated financial results approved</a>'.encode()
   denied=requests.HTTPError(response=SimpleNamespace(status_code=403))
-  with patch('connectors._refresh_nse_filings',side_effect=denied) as nse,patch('connectors.download',return_value=(html,'https://example.org/announcements')) as primary:
+  with patch('connectors._refresh_nse_filings',side_effect=denied) as nse,patch('announcements.refresh_nse_rss',side_effect=ConnectionError()),patch('connectors.download',return_value=(html,'https://example.org/announcements')) as primary:
    first=monitoring.run_refresh('filings',30);second=monitoring.run_refresh('filings',30)
   self.assertEqual(nse.call_count,2);self.assertEqual(primary.call_count,2)
   self.assertEqual(first['status'],'partial');self.assertEqual(first['covered_tickers'],['TCS'])
@@ -42,9 +42,9 @@ class AnnouncementFallbackTests(unittest.TestCase):
   self.assertEqual(store.rows('SELECT published_precision FROM event_metadata')[0]['published_precision'],'date')
   self.assertIsNone(monitoring.source_health()['filings']['last_success'])
  def test_no_provider_success_is_reported_as_failed(self):
-  with patch('connectors._refresh_nse_filings',side_effect=ConnectionError()),patch('connectors.download',side_effect=ConnectionError()):r=monitoring.run_refresh('filings')
+  with patch('connectors._refresh_nse_filings',side_effect=ConnectionError()),patch('announcements.refresh_nse_rss',side_effect=ConnectionError()),patch('connectors.download',side_effect=ConnectionError()):r=monitoring.run_refresh('filings')
   self.assertEqual(r['status'],'failed');self.assertEqual(r['covered_tickers'],[])
-  self.assertEqual(len(r['source_failures']),2)
+  self.assertEqual(len(r['source_failures']),3)
  def test_date_only_event_overlaps_calendar_day_without_invented_time(self):
   start=datetime(2026,11,11,15,tzinfo=ZoneInfo('Asia/Kolkata'));end=start+timedelta(days=1)
   event={'published':'2026-11-11T00:00:00+05:30','published_precision':'date'}

@@ -24,6 +24,8 @@ def run_viewport(browser,base,viewport,output,fixture_path):
     from playwright.sync_api import expect
     context=browser.new_context(base_url=base,viewport=viewport)
     page=context.new_page();page.set_default_timeout(20000)
+    # Exercise real indexed evidence without triggering new external source downloads in QA.
+    page.route('**/api/research',lambda route:route.continue_(post_data=json.dumps({**route.request.post_data_json,'auto_acquire':False})))
     errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
     report={'viewport':viewport,'checks':[],'screenshots':[]}
     def record(name):report['checks'].append(name)
@@ -148,7 +150,7 @@ def main():
             with socket.socket() as port_probe:
                 port_probe.bind(('127.0.0.1',0));port=port_probe.getsockname()[1]
             base=f'http://127.0.0.1:{port}'
-            env={**os.environ,'FINN_DATA_DIR':temp,'FINN_DISABLE_MONITOR':'1','OPENAI_API_KEY':'','PYTHONUNBUFFERED':'1'}
+            env={**os.environ,'FINN_DATA_DIR':temp,'FINN_DISABLE_MONITOR':'1','OPENAI_API_KEY':'','PYTHONUNBUFFERED':'1','FINN_REQUIRE_ACCESS':'0','FINN_ACCESS_PASSWORD':''}
             with (output/'server.log').open('w') as log:
                 process=subprocess.Popen([sys.executable,'-m','uvicorn','app:app','--host','127.0.0.1','--port',str(port),'--workers','1','--log-level','warning'],cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
                 try:

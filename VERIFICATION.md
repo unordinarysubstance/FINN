@@ -1,10 +1,20 @@
-# Verification — 12 November 2026
+# Verification — updated 13 November 2026
 
 ## Current result
 
 The integrated local prototype works with public source documents, optional two-pass AI, source-aware monitoring, persistent alerts and synthetic contacts. Chrome checks passed at desktop and phone widths. The submission bundle starts from a clean extraction with a ready-to-search public corpus. **Public GitHub publication, hosting/access setup and actual build-history links are still required for submission.**
 
-Research is usable with disclosed coverage limits. A structural pass is not a factual-accuracy score. Announcement coverage is partial, and six current transcript candidates remain unverified. No deployment, repository publication or email sending has occurred.
+Research is usable with disclosed coverage limits. A structural pass is not a factual-accuracy score. Announcement coverage is partial, and six current transcript candidates remain unverified. The initial private GitHub push was confirmed at ac72021; public visibility, deployment and email sending have not occurred.
+
+## Requirement audit and new implementation
+
+All five pages of the challenge were checked. [CHALLENGE_AUDIT.md](docs/CHALLENGE_AUDIT.md) maps mandatory requirements, optional examples, evidence and remaining delivery work.
+
+The automatic PDF validator was replayed against all twelve real bundled primary documents: all passed, with literal quarter-end labels retained where present.
+
+Added generic new-ticker acquisition before API research: company directory resolution/fallbacks, original issuer/exchange PDFs only, identity/type/period inspection, indexing, progress, cached attempts and explicit retry. Tests acquire a company outside all seeds and obtain company-scoped evidence without following it. Added official NSE RSS announcement fallback across followed companies, bounded-history coverage labels and deduplication across API/RSS transports. Added shared-demo HTTP Basic access, a minimal readiness route, proxy-origin tests and a Render Blueprint with persistent storage and a generated secret.
+
+These new integrations have automated tests but not live source/Render acceptance. This executor still cannot resolve external DNS or bind a browser server. Earlier 12/12 live AI and desktop/mobile results below apply to the preceding build; source synthesis protocol is unchanged, while acquisition/access/UI changes need the documented network-enabled and browser checks. No new paid model batch or cloud service was silently started.
 
 ## Evidence from real runs
 
@@ -19,7 +29,7 @@ Research is usable with disclosed coverage limits. A structural pass is not a fa
 | Announcements | NSE returned HTTP 403. The official Reliance IR fallback imported ten filings and created five alerts. Result is explicitly partial: one of eighteen followed companies. Publication dates with unknown times retain that precision. |
 | Browser | User-terminal Playwright/Chrome run passed twelve interaction checks at each of 1440×1000 and 390×844; no page errors. Representative screenshots inspected. |
 | Fresh package | 24 public PDFs, generated public-only SQLite/FTS index, manifest hashes verified. Clean extracted app started in about 1.3s, served every PDF, returned primary research evidence and preserved saved state across restart. |
-| Automated suite | 69/69 passed in 24.600 seconds. JavaScript syntax check passed. |
+| Automated suite | Latest suite: 92/92 passed in 26.304 seconds. JavaScript syntax and Python compilation passed. |
 | Container/cloud/public repository | Container configuration prepared; Docker build and deployment not executed. No public GitHub repository created. |
 
 Private evidence is in `data/verification/`: `evaluate.json`, `source-review.json`, `refresh.json`, `browser/report.json`, browser screenshots and `package.json`. It is excluded from publication because reports can contain investor context. Public documentation summarises results without exporting that state.
@@ -56,6 +66,6 @@ The initial Asian Paints annual-report download exceeded the 25 MB generic PDF c
 
 1. Resolve or explicitly disclose the latest-transcript gaps and limited live announcement coverage.
 2. Choose a Python-compatible host with persistent storage and an access gate for this single-investor app; deploy and verify the real public URL. Container execution has not yet been tested.
-3. Publish the reviewed source bundle to a public GitHub repository. GitHub access is not connected in this session.
+3. Push the new reviewed changes to the existing private unordinarysubstance/FINN repository. The brief asks for public visibility; keep the user-requested private setting until they approve changing it.
 4. Add actual coding-agent conversation exports/share links; no build history has been fabricated.
 5. Fill the concrete links/name in docs/SUBMISSION_EMAIL.md, review the final note and submit by 15 November 2026. Sending requires explicit user instruction.

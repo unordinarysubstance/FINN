@@ -2,6 +2,8 @@
 
 A mobile-first investment desk: **portfolio event → source evidence → relevant contact**. FastAPI, SQLite/FTS5 and plain JavaScript; real archived filings and clearly labelled synthetic contacts.
 
+Research accepts any NSE company ticker and automatically finds, checks and indexes available issuer/exchange annual reports and earnings-call transcripts before answering. It is independent of the bundled demo set. Source outages, ambiguous PDFs and unavailable transcripts remain visible. New acquisition and hosted-access workflows have automated checks; live acquisition for unseen tickers still needs a network-enabled run. See the [challenge requirement audit](docs/CHALLENGE_AUDIT.md).
+
 The local prototype has four annual reports, eight transcripts and twelve archived filings. All eighteen price feeds refreshed successfully; the official Reliance announcement fallback imported ten filings and created five alerts. Research with `gpt-4o-mini` plus the `gpt-6.1-sol` reviewer passed 12/12 structural checks; source inspection checked 41 retained findings and matched all 67 supporting spans to original PDFs. Chrome checks passed at 1440px and 390px. **Research answers still have coverage limits, live announcements cover only Reliance, and hosting/publication remain unfinished.** See [VERIFICATION.md](VERIFICATION.md).
 
 ## Run
@@ -37,6 +39,20 @@ You can instead set `FINN_REVIEW_MODEL=gpt-6.1-sol` in your existing `.env`. Thi
 
 ## Populate and verify the primary research library
 
+Enter a ticker such as `HDFCBANK` or `MARUTI` in Research and submit your question. The job shows discovery, download, indexing and analysis progress. Company identity uses the official NSE directory when available, with labelled exact quote-link/metadata fallbacks. Screener and Yahoo serve only as directories: their financial commentary never enters research. The PDF must establish its company, type and reporting period. Researching a company does not automatically add it to the portfolio.
+
+Acquisition aims for one annual report and two distinct transcript periods, reuses indexed evidence and applies a ten-minute cooldown to incomplete attempts. **Fetch missing sources / retry** bypasses the cooldown. Blocked or JavaScript-only sites, scanned PDFs and unfamiliar layouts can still require manual import. Arbitrary ticker support does not guarantee source availability for every company or period.
+
+Test acquisition without model calls:
+
+```sh
+python3 manage.py acquire --symbols HDFCBANK MARUTI
+# Explicit retry:
+python3 manage.py acquire --symbols HDFCBANK MARUTI --force
+```
+
+Inspect `data/verification/acquire.json`. Partial acquisition returns a nonzero exit status while retaining imported documents. `POST /api/research` acquires missing sources by default; `auto_acquire: false` restricts it to indexed sources. Filing research always stays within the selected filing.
+
 ```sh
 python3 manage.py status
 # Run acquisition, AI smoke, feed refresh and evaluation in sequence:
@@ -71,7 +87,7 @@ This mode makes no network requests. Missing files and unverified candidates sta
 - Eighteen-company mock portfolio. `TMPV` replaces stale `TATAMOTORS`; migration preserves historical records under the old symbol. `TMCV` is a separate commercial-vehicles company, not an alias for historical evidence. [NSE symbol circular](https://nsearchives.nseindia.com/content/circulars/CML70875.pdf).
 - PDF upload and public HTTPS import; page-preserving chunks, content deduplication, strict company/type/period retrieval and source links. Retrieval expands common research questions, removes near-duplicate passages and distributes evidence across documents.
 - Bounded analyst → reviewer pipeline using the [OpenAI Responses API](https://developers.openai.com/api/docs/guides/structured-outputs). Every finding needs valid citation IDs; each reviewer claim includes only its cited passages. Invalid output fails back to evidence. Diagnostics distinguish connectivity, authentication, quota, access, timeouts and validation. Cache keys include exact evidence, source metadata, model and pipeline version. Token usage and latency are recorded when available.
-- NSE date-range announcement adapter, configurable official-company fallback and Yahoo end-of-day adapter, with persisted refresh history and deduplication. NSE returned HTTP 403 in live testing; the fallback successfully covered Reliance only (1/18 companies) and reports partial coverage. Date-only announcements explicitly show that publication time is unknown. Prices exclude incomplete/future sessions; volume uses the preceding twenty sessions. Split-affected windows do not generate threshold alerts.
+- NSE date-range announcements, an official recent RSS fallback across followed companies, a configurable company-IR fallback and Yahoo end-of-day data. RSS tests pass; live RSS validation is pending. Its finite recent feed always reports partial window coverage. Persisted refresh history and deduplication remain in place. NSE returned HTTP 403 in live testing; the fallback successfully covered Reliance only (1/18 companies) and reports partial coverage. Date-only announcements explicitly show that publication time is unknown. Prices exclude incomplete/future sessions; volume uses the preceding twenty sessions. Split-affected windows do not generate threshold alerts.
 - A single local scheduler checks announcements every fifteen minutes and completed-session prices after 16:00 Asia/Kolkata. Persistent in-app alerts are unique per event/session and link to research/contacts. Failed market refreshes cannot alert on stale cached prices. Browser badges poll every thirty seconds; no email or device notifications are sent.
 - Validated JSON contact import, multiple employers with dates, expertise, education, explicit introduction paths and no-match responses. Use [examples/contacts.json](examples/contacts.json) to replace or merge a network. Employment overlap alone does not invent a relationship.
 - Additive, versioned SQLite migrations preserve saved events, uploads and settings. Imported contacts are not overwritten by startup seeding.
@@ -98,7 +114,7 @@ flowchart LR
 
 At most two model calls per uncached research request, with no multi-round debate and `store=False`. Only the question and selected primary-source passages are sent; profiles are not sent to the model. Evidence mode and cached answers require no new model call. The latest batch had eleven uncached answers using 100,139 analyst tokens and 86,660 reviewer tokens, with observed request latency of about 9.5–23.2 seconds; one answer was cached. These are measured token counts, not a billing claim. See [research evaluation](docs/EVALUATION.md) for quality limits.
 
-All data stays in `data/` or `FINN_DATA_DIR`. Local documents, contacts, jobs, alerts, cached outputs and verification reports persist until removed by the workspace owner. This is a single-investor prototype with a same-origin write guard, **not** a multi-user authenticated service. Use synthetic data and an access gate before exposing it beyond the local machine. [Deployment and retention notes](docs/DEPLOYMENT.md) distinguish existing controls from production work.
+Workspace state stays in `data/` or `FINN_DATA_DIR`, on the local machine or hosting volume, until the owner removes it. An optional shared HTTP Basic gate protects the UI, PDFs and APIs for the hosted demonstration. It does not isolate multiple investors: all authenticated demo users share one workspace. Same-origin write checks remain active. [Deployment and retention notes](docs/DEPLOYMENT.md) cover Render and remaining production work.
 
 Inspired by **CS787 AlphaAgents**, by Aamir Ahmad, Aaryan Maheshwari, Aviral Gupta, Pallav Rastogi and Suyash Kapoor. Reused concepts include scoped tools, grounded analysis, deterministic numeric tools and critique before synthesis. FINN is separate code with a smaller pipeline; the original project and attribution are preserved. Archived company PDFs remain the property of their issuers.
 
@@ -155,4 +171,4 @@ python3 -m pip install -r requirements-dev.txt
 python3 browser_qa.py
 ```
 
-The runner starts a temporary local server against a database snapshot, disables model calls/monitoring, exercises desktop and 390px phone layouts and saves screenshots/report privately. It checks archive events, saved state, PDF access/upload, research evidence/progress/errors, contacts/imports, alerts and settings. Both widths passed twelve checks with no page errors; representative screenshots were inspected. It does not mutate the working database or validate live AI answers. Physical-device Safari and accessibility audits remain separate work.
+The runner starts a temporary local server against a database snapshot, disables model calls/monitoring, exercises desktop and 390px phone layouts and saves screenshots/report privately. It checks archive events, saved state, PDF access/upload, research evidence/progress/errors, contacts/imports, alerts and settings. The prior build passed twelve checks at both widths with no page errors; screenshots were inspected. Rerun after the acquisition/access changes. The runner disables automatic external acquisition and hosted access in its isolated local snapshot. It does not mutate the working database or validate live AI answers. Physical-device Safari and accessibility audits remain separate work.

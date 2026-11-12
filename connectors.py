@@ -7,7 +7,7 @@ import socket
 import re
 import math
 import os
-from urllib.parse import urljoin,urlparse
+from urllib.parse import urljoin,urlparse,quote,parse_qs
 import requests
 from bs4 import BeautifulSoup
 from store import ROOT,db,rows,now,ticker,import_pdf,settings,change
@@ -38,9 +38,33 @@ def download(url,max_bytes=25*1024*1024):
     raise ValueError('Too many redirects.')
 
 def discover(symbol):
+    return discover_profile(symbol)['documents']
+
+def discover_profile(symbol):
+    try:return _screener_profile(symbol)
+    except Exception as exc:
+        from diagnostics import failure
+        discovery_error=failure(exc)
+    # Directory metadata locates the issuer site; none of these financial fields enter research.
+    import yfinance as yf
+    symbol=ticker(symbol);info=yf.Ticker(symbol+'.NS').get_info()
+    if info.get('symbol')!=symbol+'.NS' or info.get('quoteType')!='EQUITY' or not info.get('website') or not info.get('longName'):
+        raise ValueError('No verifiable NSE company directory entry was available.')
+    return {'ticker':symbol,'company_name':info['longName'],'exchange_link_verified':False,'quote_verified':True,
+            'website':info['website'],'discovery_url':f'https://finance.yahoo.com/quote/{quote(symbol,safe="")}.NS/profile/',
+            'documents':[],'source_failures':[{'source':'Screener directory',**discovery_error}]}
+
+def _screener_profile(symbol):
     symbol=ticker(symbol)
-    data,url=download(f'https://www.screener.in/company/{symbol}/consolidated/',3*1024*1024)
-    return parse_discovery(data,url,symbol)
+    try:data,url=download(f'https://www.screener.in/company/{quote(symbol,safe="")}/consolidated/',3*1024*1024)
+    except requests.HTTPError as exc:
+        if exc.response is None or exc.response.status_code!=404:raise
+        data,url=download(f'https://www.screener.in/company/{quote(symbol,safe="")}/',3*1024*1024)
+    soup=BeautifulSoup(data,'html.parser');heading=soup.find('h1')
+    website=next((urljoin(url,a['href']) for a in soup.find_all('a',href=True) if a.get_text(' ',strip=True).lower()=='website'),None)
+    verified=any((urlparse(a['href']).hostname or '').removeprefix('www.')=='nseindia.com' and parse_qs(urlparse(a['href']).query).get('symbol')==[symbol] for a in soup.find_all('a',href=True))
+    return {'ticker':symbol,'company_name':heading.get_text(' ',strip=True) if heading else '',
+            'exchange_link_verified':verified,'website':website,'discovery_url':url,'documents':parse_discovery(data,url,symbol)}
 
 def parse_discovery(data,url,symbol):
     soup=BeautifulSoup(data,'html.parser')
@@ -84,8 +108,15 @@ def refresh_filings(days=7):
     except Exception as exc:
         from diagnostics import failure
         nse_error=failure(exc)
+    try:
+        from announcements import refresh_nse_rss
+        result=refresh_nse_rss(days)
+        result['source_failures']=[{'source':'NSE API',**nse_error}]
+        return result
+    except Exception as exc:rss_error=failure(exc)
     result=refresh_company_filings(days)
     result['source_failures'].insert(0,{'source':'NSE',**nse_error})
+    result['source_failures'].insert(1,{'source':'NSE RSS',**rss_error})
     if not result['covered_tickers']:result['failed']=result['source_failures']
     return result
 
@@ -179,6 +210,9 @@ def ingest_filings(data,portfolio):
             url=item.get('attchmntFile') or ''
             if not url.startswith('https://'): url=''
             eid=hashlib.sha256((symbol+title+raw_date+url).encode()).hexdigest()[:24]
+            existing=c.execute('SELECT id FROM events WHERE ticker=? AND source_url=? AND archive=0',(symbol,url)).fetchone() if url else None
+            if existing:
+                ids.append(existing['id']);continue
             result=c.execute('INSERT OR IGNORE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,0,0)',(eid,symbol,title,category,date,priority,detail,None,url,0))
             added+=result.rowcount
             ids.append(eid)

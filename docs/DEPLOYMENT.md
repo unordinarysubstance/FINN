@@ -1,36 +1,39 @@
-# Local run and deployment preparation
+# Local and Render deployment
 
-FINN remains a local FastAPI/SQLite application. No host or public repository has been created. Sites hosting expects a static site or JavaScript Worker; this Python backend has not been migrated to that runtime.
+The user confirmed the initial private push to https://github.com/unordinarysubstance/FINN at `ac72021`. The challenge requests a public repository; it remains private under the user's explicit instruction pending approval to change visibility. Render is selected, but no service has been created or deployed in this session.
 
 ## Local
 
-Use Python 3.12+, install `requirements.txt`, then run:
+Use Python 3.12+, install requirements.txt, then run:
 
 ```sh
-python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
+FINN_REVIEW_MODEL=gpt-6.1-sol python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Put optional credentials in `.env`; never commit it. Monitoring starts with the backend and stops with it. Use one worker. SQLite and original PDFs live in `FINN_DATA_DIR` (default `data/`). Back up this directory together, not the SQLite file alone while the app is writing.
+Keep credentials in your existing local .env or environment. The password gate is optional locally. To enable it, set FINN_REQUIRE_ACCESS=1, FINN_ACCESS_USER=finn and a FINN_ACCESS_PASSWORD of at least sixteen characters in a private environment. Keep credentials out of command-line arguments, URLs, Git and chat.
 
-## Reviewable container configuration
+## Render configuration
 
-The submission bundle contains twelve archived public PDFs under `demo_documents/`, twelve annual-report/transcript PDFs under `demo_primary/`, and a generated public-only SQLite/FTS index under `demo_data/`. First startup copies the index only when no investor database exists and resolves its relative PDF paths. It then adds the synthetic demonstration contacts and five historical events. The corpus works without a sibling CS787 checkout or network access. A clean extraction, all original-PDF endpoints, evidence retrieval and saved-state preservation across restart have passed in-process checks. The source workspace can also seed from `../CS787-main/company_assets`.
+The root render.yaml defines one Docker web service in Singapore, compute plan `0.5c-512mb`, a 1 GB disk at /data, one instance and manual service deployments. Applying it creates **paid compute and storage**: review the current Render estimate first. Free Render web services cannot attach a persistent disk. This implementation preserves SQLite, settings, alerts and imported PDFs on that disk. [Render storage documentation](https://render.com/docs/disks).
 
-```sh
-python3 package_submission.py
-# Extract dist/finn-submission.zip into a clean directory, then from its finn/ folder:
-docker build -t finn-demo .
-docker run --rm -p 127.0.0.1:8000:8000 --env-file .env -v finn-data:/data finn-demo
-```
+The Docker process listens on 8000 and the Blueprint sets PORT to match. FORWARDED_ALLOW_IPS=* trusts Render's ingress so HTTPS origins work with the write guard; use it only behind a trusted reverse proxy. One worker/instance preserves SQLite and scheduler ownership. Large PDF imports may need more memory; the smallest plan has not been load-tested.
 
-Set `FINN_REVIEW_MODEL=gpt-6.1-sol` alongside `OPENAI_API_KEY` to use the source-reviewed model pair. The default without this setting uses the analyst model for both passes. Public PDFs can live in the image; investor state and newly imported documents belong on the persistent `/data` volume.
+Render generates the shared access password as a secret. No actual password is committed. The minimal /healthz readiness route is public. UI, PDFs, /docs and workspace APIs require authentication. /api/health is protected because it contains source state. Required hosted access fails startup when the password is missing or too short. All authenticated users share one demo workspace; this is not per-investor ownership.
 
-The container configuration is prepared but has not been built in this restricted session. `.dockerignore` excludes local secrets and runtime data. Never bake credentials into an image. Store them in the host's secret manager/environment. A real host needs outbound HTTPS, a persistent volume, a long-running single process, and TLS. Ephemeral/serverless workers without a persistent volume or scheduler are unsuitable for this implementation.
+## Connect and launch
 
-Before making the prototype internet-accessible, configure an authenticated reverse proxy or equivalent access gate. This version has no application authentication or per-user ownership; keep real network data out of a publicly accessible demo. Use an isolated synthetic demo database. Monitor source health after deployment; do not interpret a running process as proof of working feeds.
+1. Push these reviewed changes to FINN.
+2. Sign in to your personal [Render dashboard](https://dashboard.render.com/). Open Account Settings → Account Security → Git Deployment Credentials, add GitHub and authorize FINN. Complete browser authorization without sharing tokens. [Official connection instructions](https://render.com/docs/git-provider).
+3. Choose New → Blueprint, select FINN/main and root render.yaml. Review the resource list and recurring cost before applying. Platform schema validation and service creation have not run from this restricted executor.
+4. The first deploy can use evidence mode without model credentials. To enable AI, add OPENAI_API_KEY directly in the service's secret Environment settings and redeploy. The configured analyst/reviewer pair incurs model usage. No local .env is copied.
+5. Retrieve FINN_ACCESS_PASSWORD privately in Render's Environment settings. Open the actual service URL and sign in as finn. Keep the password out of the URL/chat and share evaluator access only through the approved submission channel.
+6. Check anonymous /healthz returns 200, anonymous UI/PDF/API requests return 401, and authenticated navigation, research, acquisition, uploads and settings work. Inspect live price/announcement source outcomes.
+7. Save an event, restart/redeploy and confirm it persists on /data. Test from a phone, then record the real URL and checks in VERIFICATION.md and the covering note.
 
-## Data and retention
+The public PDFs and portable index are in the image. Startup installs the index only into a new workspace and adds synthetic contacts and dated archive events. Existing investor state is never replaced. New downloads and mutable state live on /data; new-company acquisition and feeds require outbound HTTPS.
 
-Only selected primary-source passages and the question go to the configured model, using `store=False`. Contact profiles stay in SQLite and are never included in model input. Local documents, profiles, saved events, jobs, alerts and caches persist until the workspace owner removes them; no automatic expiry is claimed. Full research reports in `data/verification` can contain questions, excerpts and contacts and are excluded from publication.
+## Privacy and retention
 
-For a real multi-user service: separate each investor's ownership at every query; use consented profile imports with deletion/export; define retention periods; encrypt disks/backups; audit access; manage credentials server-side; and add access-controlled original-document downloads. These are deployment work, not existing capabilities.
+Only selected source passages and questions go to the model with store=False. Contacts are not sent. Workspace data persists until removed by its owner. Back up SQLite consistently with its backup facility and retain original PDFs with it; copying an actively written database file alone is not reliable.
+
+A real multi-user service still needs per-investor ownership checks, individual authentication, consented imports, deletion/export and retention rules, encrypted storage/backups and access auditing. The shared-demo password gate does not implement those controls.

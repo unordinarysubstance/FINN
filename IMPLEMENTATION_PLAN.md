@@ -8,6 +8,8 @@ Document status: Canonical copy of the complete phase sequence from the original
 
 Implementation checkpoint (12 November 2026): four annual reports and eight transcripts indexed; real two-pass research completed (12/12 structural checks with separate stronger reviewer); 41 retained findings source-inspected with coverage limits; eighteen price feeds refreshed; ten Reliance filings imported through the partial official-company fallback; desktop and phone browser checks passed. A portable public corpus and search index are packaged without investor state. Current transcript gaps, broader announcement coverage, public repository, hosting and actual build-history links remain open. See VERIFICATION.md for exact evidence and limits.
 
+13 November requirement audit: added automatic new-ticker primary acquisition, official NSE RSS fallback, shared hosted-demo access, readiness and Render configuration. See docs/CHALLENGE_AUDIT.md for mandatory versus optional scope and exact pending delivery checks. Initial private GitHub push confirmed; visibility remains private by user instruction.
+
 ## 1. Objective and current state
 
 Complete a focused, reliable FINN prototype demonstrating:

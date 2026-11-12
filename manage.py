@@ -117,13 +117,14 @@ def verify(manifest,include_historical,symbols):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['status','prepare','evaluate','refresh','smoke-ai','verify'])
+    parser.add_argument('command',choices=['status','prepare','acquire','evaluate','refresh','smoke-ai','verify'])
     parser.add_argument('--manifest',default=str(store.ROOT/'examples'/'primary_sources.json'))
     parser.add_argument('--include-historical',action='store_true')
     parser.add_argument('--local-dir',help='Import verified manifest PDFs from this inbox without network requests; see each record local_filename in the report.')
     parser.add_argument('--symbols',nargs='+',default=['TCS','INFY','RELIANCE','ASIANPAINT'])
     parser.add_argument('--question-index',type=int,choices=range(1,len(QUESTIONS)+1),help='Evaluate only this question (1 business, 2 outlook, 3 cash flow) to diagnose a specific failure.')
     parser.add_argument('--days',type=int,choices=[1,7,30,365],default=7,help='Requested announcement refresh window.')
+    parser.add_argument('--force',action='store_true',help='Retry source acquisition without the ten-minute retry cooldown.')
     args=parser.parse_args()
     if args.local_dir and args.command!='prepare':parser.error('--local-dir is only supported for prepare')
     if args.question_index and args.command!='evaluate':parser.error('--question-index is only supported for evaluate')
@@ -132,6 +133,9 @@ def main():
         import os
         result={'ai_configured':bool(os.getenv('OPENAI_API_KEY')),'model':os.getenv('FINN_MODEL','gpt-4o-mini'),'coverage':[store.coverage(s) for s in args.symbols],'sources':monitoring.source_health()}
     elif args.command=='prepare':result=prepare(args.manifest,args.include_historical,args.local_dir)
+    elif args.command=='acquire':
+        from acquisition import acquire
+        result={'companies':[acquire(s,args.force) for s in args.symbols]}
     elif args.command=='evaluate':result=evaluate(args.symbols,[args.question_index] if args.question_index else None)
     elif args.command=='verify':result=verify(args.manifest,args.include_historical,args.symbols)
     elif args.command=='smoke-ai':
@@ -152,6 +156,8 @@ def main():
     path.write_text(json.dumps(result,indent=2))
     print('Report:',path)
     if args.command=='smoke-ai': print(json.dumps({'mode':result['mode'],'diagnostics':result['diagnostics']},indent=2))
+    elif args.command=='acquire':
+        for item in result['companies']:print(item['ticker'],item['status'],str(item['coverage']['annual_reports'])+' annual reports',str(item['coverage']['transcripts'])+' transcripts')
     elif args.command=='prepare':
         for r in result['documents']:print(r['ticker'],r['period'] or 'period unknown',r['status'],r.get('error',{}).get('message',''))
     elif args.command=='evaluate':print(f"AI answers passing structural checks: {result['passed_automated']}/{result['required']}; manual review pending.")
@@ -171,6 +177,7 @@ def main():
         if result.get('evaluation',{}).get('status')=='skipped':print('Evaluation skipped:',result['evaluation']['reason'])
     else:print('AI configured:',result['ai_configured'],'Model:',result['model']);print('Coverage:',[(c['ticker'],c['annual_reports'],c['transcripts']) for c in result['coverage']])
     if args.command=='smoke-ai' and result['mode']!='ai':return 1
+    if args.command=='acquire' and any(item['status'] not in ('ready','existing') for item in result['companies']):return 1
     if args.command=='evaluate' and result['passed_automated']!=result['required']:return 1
     if args.command=='prepare' and any(r['status'] not in ('indexed','already_indexed') for r in result['documents']):return 1
     if args.command=='refresh' and any(v.get('status')!='completed' for v in result.values()):return 1

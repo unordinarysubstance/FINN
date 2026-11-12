@@ -18,15 +18,18 @@ from store import db,rows,ticker,now
 import seed
 import connectors
 import monitoring
+import access
 from diagnostics import failure
 from network import ContactImport,import_contacts
 from research import research,reliance_metrics
+from acquisition import acquire,acquire_and_research
 
 pool=ThreadPoolExecutor(max_workers=2)
 job_lock=threading.Lock()
 
 @asynccontextmanager
 async def lifespan(app):
+    access.validate_configuration()
     store.init(); seed.seed()
     with db() as c:
         c.execute("UPDATE jobs SET status='failed',error='Server restarted. Please retry.' WHERE status IN ('pending','running')")
@@ -41,14 +44,23 @@ app.mount('/static',StaticFiles(directory=store.ROOT/'static'),name='static')
 @app.middleware('http')
 async def local_safety(request:Request,call_next):
     # Same-origin mutation guard for the local single-user prototype.
+    response=access.denied(request)
     origin=request.headers.get('origin')
-    if request.method not in ('GET','HEAD','OPTIONS') and origin and origin!=str(request.base_url).rstrip('/'):
-        return JSONResponse({'detail':'Cross-origin writes are not allowed.'},403)
-    response=await call_next(request)
+    if response is None:
+        if request.method not in ('GET','HEAD','OPTIONS') and origin and origin!=str(request.base_url).rstrip('/'):
+            response=JSONResponse({'detail':'Cross-origin writes are not allowed.'},403)
+        else:response=await call_next(request)
     response.headers['X-Content-Type-Options']='nosniff'
     response.headers['Referrer-Policy']='no-referrer'
     response.headers['Content-Security-Policy']="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     return response
+
+@app.api_route('/healthz',methods=['GET','HEAD'])
+def readiness():
+    try:
+        with db() as c:c.execute('SELECT version FROM schema_migrations LIMIT 1').fetchone()
+    except Exception:return JSONResponse({'status':'unavailable'},503)
+    return {'status':'ok'}
 
 @app.exception_handler(ValueError)
 async def value_error(request,exc): return JSONResponse({'detail':str(exc)},400)
@@ -141,7 +153,7 @@ def remove_company(symbol:str):
     with db() as c: c.execute('UPDATE companies SET portfolio=0 WHERE ticker=?',(ticker(symbol),))
     return {'ok':True}
 
-def submit(function,*args):
+def submit(function,*args,report_progress=False):
     with job_lock:
         if rows("SELECT count(*) n FROM jobs WHERE status IN ('pending','running')")[0]['n']>=4:
             raise HTTPException(429,'Four jobs are already queued. Please wait for one to finish.')
@@ -150,7 +162,9 @@ def submit(function,*args):
     def work():
         with db() as c: c.execute("UPDATE jobs SET status='running' WHERE id=?",(job_id,))
         try:
-            result=function(*args)
+            def progress(stage,message):
+                with db() as c:c.execute("UPDATE jobs SET result=? WHERE id=? AND status='running'",(json.dumps({'stage':stage,'message':message}),job_id))
+            result=function(*args,progress=progress) if report_progress else function(*args)
             with db() as c: c.execute("UPDATE jobs SET status='completed',result=? WHERE id=?",(json.dumps(result),job_id))
         except Exception as exc:
             # Do not expose provider URLs, keys, or exception internals to the client.
@@ -171,13 +185,22 @@ class ResearchRequest(BaseModel):
     question:str=Field(min_length=3,max_length=1500)
     document_id:str|None=None
     periods:list[str]=Field(default_factory=list,max_length=8)
+    auto_acquire:bool=True
 
 @app.post('/api/research')
 def ask(body:ResearchRequest):
     symbol=ticker(body.ticker)
     if body.document_id and not rows('SELECT id FROM documents WHERE id=? AND ticker=?',(body.document_id,symbol)):
         raise HTTPException(404,'Document not found for this company.')
-    return submit(research,symbol,body.question,body.document_id,body.periods)
+    return submit(acquire_and_research,symbol,body.question,body.document_id,body.periods,body.auto_acquire,report_progress=True)
+
+class AcquireRequest(BaseModel):
+    ticker:str
+    force:bool=False
+
+@app.post('/api/documents/acquire')
+def acquire_documents(body:AcquireRequest):
+    return submit(acquire,ticker(body.ticker),body.force,report_progress=True)
 
 @app.post('/api/refresh/{kind}')
 def refresh(kind:Literal['filings','prices'],days:int=7):

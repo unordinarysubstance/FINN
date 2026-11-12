@@ -11,7 +11,7 @@ import store
 from seed import COMPANIES
 
 ROOT=Path(__file__).resolve().parent
-FILES=['app.py','connectors.py','diagnostics.py','manage.py','monitoring.py','network.py','research.py','seed.py','store.py','package_submission.py','browser_qa.py','requirements-dev.txt','requirements.txt','README.md','VERIFICATION.md','IMPLEMENTATION_PLAN.md','.gitignore','.env.example','Dockerfile','.dockerignore']
+FILES=['app.py','access.py','acquisition.py','announcements.py','connectors.py','diagnostics.py','manage.py','monitoring.py','network.py','research.py','seed.py','store.py','package_submission.py','browser_qa.py','render.yaml','requirements-dev.txt','requirements.txt','README.md','VERIFICATION.md','IMPLEMENTATION_PLAN.md','.gitignore','.env.example','Dockerfile','.dockerignore']
 
 def public_index(entries,folder):
     """Export only allowlisted issuer PDFs and their extracted text, never investor state."""
