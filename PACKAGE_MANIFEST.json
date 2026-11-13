@@ -26,13 +26,13 @@
   },
   {
     "path": "README.md",
-    "bytes": 18465,
-    "sha256": "3221d66b0f8bea9eb450aafefd589c00384f1c23ad2793ff53d38cab33c9453b"
+    "bytes": 18611,
+    "sha256": "d6a15011601deab1ef56c4f2fe751791fb6dacb9035024db67ea6497199314a3"
   },
   {
     "path": "VERIFICATION.md",
-    "bytes": 9803,
-    "sha256": "622dbfefb797661b2558ae35472355bf88fbe77f494b7bb21d6a7d23355e808e"
+    "bytes": 10204,
+    "sha256": "26e534f1d08ebba39015242bb740dc229b3916dfc1191542fd284422adb34c74"
   },
   {
     "path": "access.py",
@@ -41,8 +41,8 @@
   },
   {
     "path": "acquisition.py",
-    "bytes": 13765,
-    "sha256": "d4bc18855a87b86da49d1189945c86e64e58d4c653a47e1aa219ee1c55c6df8e"
+    "bytes": 17139,
+    "sha256": "70154b3ceadf8e180223e48fb4e4f8a2ec4470d623a87725aa0ad92c37509e79"
   },
   {
     "path": "announcements.py",
@@ -61,13 +61,13 @@
   },
   {
     "path": "connectors.py",
-    "bytes": 16075,
-    "sha256": "f99aae31dc3a76b5b93e32a250aaefad447f67c988db960e4e353ff0ab5575ab"
+    "bytes": 17459,
+    "sha256": "4468bab448d038b6388ef55ed64b155c6857a747fbdc5b27553fe1b91f3f6ca2"
   },
   {
     "path": "demo_data/public.sqlite3",
     "bytes": 14065664,
-    "sha256": "a427cc70bbe9214a498ea26c7cc16b398cdbdc5fc543ba129eca7a6b3f50a707"
+    "sha256": "195061e34a42849dd50124f72b34d5c90bc2794c95aa81b742c8cd129b9c5303"
   },
   {
     "path": "demo_documents/BAJFINANCE.pdf",
@@ -196,8 +196,8 @@
   },
   {
     "path": "docs/CHALLENGE_AUDIT.md",
-    "bytes": 5965,
-    "sha256": "84342399127e7a5fe400f589d1c29937642d0c840679c4f5ad98fe899092bbda"
+    "bytes": 6211,
+    "sha256": "c19e04bc1a5051ef0b3949becd888775a9bb093995ef8e79e24a517df537bbe7"
   },
   {
     "path": "docs/DEMO.md",
@@ -306,8 +306,8 @@
   },
   {
     "path": "tests/test_acquisition.py",
-    "bytes": 10112,
-    "sha256": "e4c91e4b261db949706276defb5d592841bff8d2583ea773c5e5154a606bd6ef"
+    "bytes": 13816,
+    "sha256": "c7acf4c2907da01bd275b426046edb7ec4738735e4a5f7b6925bd3138e7576d0"
   },
   {
     "path": "tests/test_announcement_fallback.py",
@@ -336,8 +336,8 @@
   },
   {
     "path": "tests/test_exchange_rss.py",
-    "bytes": 3438,
-    "sha256": "a2c81e9c9da6fc4da87ac606aa13b5851ccfb25b8732fec5140d93be36447d29"
+    "bytes": 5946,
+    "sha256": "3ff28ce221fb9f50428bc2b2c0edf5fae9381fffdf7647d676f90a02235d7805"
   },
   {
     "path": "tests/test_finn.py",

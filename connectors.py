@@ -108,13 +108,27 @@ def refresh_filings(days=7):
     except Exception as exc:
         from diagnostics import failure
         nse_error=failure(exc)
+    rss_result=None;rss_error=None
     try:
         from announcements import refresh_nse_rss
-        result=refresh_nse_rss(days)
-        result['source_failures']=[{'source':'NSE API',**nse_error}]
-        return result
+        rss_result=refresh_nse_rss(days)
     except Exception as exc:rss_error=failure(exc)
-    result=refresh_company_filings(days)
+    try:result=refresh_company_filings(days)
+    except Exception as exc:
+        if rss_result is None:raise
+        result={'added':0,'event_ids':[],'covered_tickers':[],'source_failures':[{'source':'Company IR',**failure(exc)}]}
+    if rss_result is not None:
+        combined=dict(rss_result)
+        combined['source_failures']=[{'source':'NSE API',**nse_error}]+result.get('source_failures',[])
+        combined['components']=[{'source':'NSE RSS','added':rss_result['added'],'observed_start':rss_result.get('observed_start'),'observed_end':rss_result.get('observed_end')},
+                                {'source':'Company IR','added':result['added'],'covered_tickers':result.get('covered_tickers',[])}]
+        combined['added']+=result['added']
+        combined['event_ids']=list(dict.fromkeys(combined['event_ids']+result['event_ids']))
+        combined['covered_tickers']=sorted(set(combined.get('covered_tickers',[]))|set(result.get('covered_tickers',[])))
+        if result.get('covered_tickers'):
+            combined['source']='NSE RSS + Company IR'
+            combined['coverage_notice']+=' Supplemented with configured issuer pages; portfolio/window completeness remains unverified.'
+        return combined
     result['source_failures'].insert(0,{'source':'NSE',**nse_error})
     result['source_failures'].insert(1,{'source':'NSE RSS',**rss_error})
     if not result['covered_tickers']:result['failed']=result['source_failures']
@@ -184,6 +198,9 @@ def refresh_company_filings(days=7):
                     if day>end or day+timedelta(days=1)<=start:continue
                     eid=hashlib.sha256((symbol+item['url']+item['publication_date']).encode()).hexdigest()[:24]
                     category,priority=classify(item['title'])
+                    existing=c.execute('SELECT id FROM events WHERE ticker=? AND source_url=? AND archive=0',(symbol,item['url'])).fetchone()
+                    if existing:
+                        result['event_ids'].append(existing['id']);continue
                     added=c.execute('INSERT OR IGNORE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,0,0)',(eid,symbol,item['title'],category,day.isoformat(),priority,item['title'],None,item['url'],0)).rowcount
                     c.execute('INSERT OR IGNORE INTO event_metadata VALUES (?,?,?,?)',(eid,'Company IR','date',now()))
                     result['added']+=added;result['event_ids'].append(eid)

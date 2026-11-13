@@ -37,3 +37,25 @@ class ExchangeRSSTests(unittest.TestCase):
   before=len(store.rows('SELECT id FROM events'))
   added,ids=connectors.ingest_filings([{'symbol':'TCS','desc':'Quarterly financial results','an_dt':self.when.strftime('%d-%b-%Y %H:%M:%S'),'attchmntFile':'https://nsearchives.nseindia.com/a.pdf'}],{'TCS'})
   self.assertEqual(added,0);self.assertEqual(len(ids),1);self.assertEqual(len(store.rows('SELECT id FROM events')),before)
+ def test_successful_recent_rss_still_supplements_configured_issuer_pages(self):
+  rss_result={'source':'NSE RSS','partial':True,'added':0,'event_ids':[],'covered_tickers':[],'coverage_notice':'Bounded recent RSS only.'}
+  company_result={'source':'Company IR','partial':True,'added':1,'event_ids':['issuer-event'],'covered_tickers':['TCS'],'source_failures':[]}
+  with patch('connectors._refresh_nse_filings',side_effect=ConnectionError()),patch('announcements.refresh_nse_rss',return_value=rss_result),patch('connectors.refresh_company_filings',return_value=company_result) as supplement:
+   result=connectors.refresh_filings(30)
+  supplement.assert_called_once_with(30)
+  self.assertEqual(result['source'],'NSE RSS + Company IR');self.assertEqual(result['event_ids'],['issuer-event'])
+  self.assertEqual(result['added'],1);self.assertTrue(result['partial']);self.assertIn('completeness remains unverified',result['coverage_notice'])
+ def test_issuer_failure_does_not_discard_successful_rss(self):
+  rss_result={'source':'NSE RSS','partial':True,'added':0,'event_ids':[],'covered_tickers':[],'coverage_notice':'Bounded recent RSS only.'}
+  with patch('connectors._refresh_nse_filings',side_effect=ConnectionError()),patch('announcements.refresh_nse_rss',return_value=rss_result),patch('connectors.refresh_company_filings',side_effect=ConnectionError()):result=connectors.refresh_filings(30)
+  self.assertEqual(result['source'],'NSE RSS');self.assertEqual(len(result['source_failures']),2)
+ def test_rss_and_issuer_page_same_attachment_keeps_one_event_and_timestamp(self):
+  import json,os
+  date=datetime.now().strftime('%b %d, %Y')
+  config=store.DATA/'sources.json';config.write_text(json.dumps({'sources':[{'ticker':'TCS','url':'https://issuer.example/announcements'}]}))
+  html=f'<a href="https://nsearchives.nseindia.com/a.pdf">{date} Quarterly financial results approved</a>'.encode()
+  def fetch(url,*args,**kwargs):return (self.feed(),url) if url==rss.RSS_URL else (html,url)
+  with patch.dict(os.environ,{'FINN_ANNOUNCEMENT_SOURCES':str(config)}),patch('connectors._refresh_nse_filings',side_effect=ConnectionError()),patch('connectors.download',side_effect=fetch):result=monitoring.run_refresh('filings',30)
+  self.assertEqual(result['added'],2);self.assertEqual(result['alerts_created'],2)
+  self.assertEqual(len(store.rows('SELECT id FROM events')),2)
+  self.assertEqual(store.rows("SELECT published_precision FROM event_metadata WHERE source='NSE RSS'")[0]['published_precision'],'timestamp')

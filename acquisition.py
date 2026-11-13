@@ -7,7 +7,7 @@ import threading
 import time
 import unicodedata
 from datetime import datetime,timezone,timedelta
-from urllib.parse import urljoin,urlparse
+from urllib.parse import urljoin,urlparse,parse_qs
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 import connectors
@@ -17,7 +17,7 @@ from diagnostics import failure
 DIRECTORY_URL='https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv'
 _locks=[threading.Lock() for _ in range(32)]
 _directory_lock=threading.Lock()
-POLICY=1
+POLICY=2
 
 class SourceValidation(ValueError):pass
 
@@ -80,7 +80,7 @@ def reporting_period(kind,pages):
             if m:return 'Quarter ended '+m[1]
     raise SourceValidation('The reporting period could not be verified on the PDF cover pages.')
 
-def inspect_pdf(content,company,kind):
+def inspect_pdf(content,company,kind,issuer_hosted=False):
     if not content.startswith(b'%PDF-'):raise SourceValidation('The source did not return a PDF.')
     reader=PdfReader(io.BytesIO(content))
     if len(reader.pages)>1000:raise SourceValidation('PDF exceeds 1,000 pages.')
@@ -91,6 +91,11 @@ def inspect_pdf(content,company,kind):
     # Legal suffixes and a derived legal acronym account for ordinary issuer branding.
     identity_forms=[name]+([core] if len(core)>=6 else [])
     if len(acronym)>=3:identity_forms.append(normal(acronym+' Limited'))
+    # Issuer-hosted calls often use the brand without its legal jurisdiction suffix.
+    # Keep this narrower alias unavailable for arbitrary exchange-hosted PDFs.
+    if issuer_hosted:
+        brand=normal(' '.join(w for w in words if w.lower()!='india'))
+        if len(brand)>=8:identity_forms.append(brand)
     if not name or not (any(form in cover for form in identity_forms) or (isin and normal(isin) in cover)):
         raise SourceValidation('The PDF company identity did not match the requested NSE issuer.')
     text=' '.join(' '.join(pages).lower().split())
@@ -111,17 +116,66 @@ def issuer_links(data,base_url,website):
         link=urljoin(base_url,a['href']);p=urlparse(link);label=a.get_text(' ',strip=True)
         own=(p.hostname or '').removeprefix('www.')==host or (p.hostname or '').endswith('.'+host)
         if p.scheme!='https' or not own:continue
-        context=label+' '+p.path
-        if re.search(r'\.pdf$',p.path,re.I):
+        try:resolved=viewer_target(link,website)
+        except SourceValidation:continue
+        context=label+' '+urlparse(resolved).path
+        if re.search(r'\.pdf$',urlparse(resolved).path,re.I):
             kind='transcript' if re.search('transcript',context,re.I) else 'annual_report' if re.search(r'annual.?report|integrated.?report',context,re.I) else None
             if kind:documents.append({'url':link,'title':label or p.path.split('/')[-1],'kind':kind,'discovery_url':base_url})
         elif re.search(r'investor|annual.?report|financial.?result|earning|concall|transcript',context,re.I):pages.append(link)
     return documents,list(dict.fromkeys(pages))
 
 def primary_url(url,website):
-    host=(urlparse(url).hostname or '').removeprefix('www.')
+    parsed=urlparse(url)
+    if parsed.username or parsed.password or parsed.port not in (None,443):return False
+    host=(parsed.hostname or '').removeprefix('www.')
     issuer=(urlparse(website or '').hostname or '').removeprefix('www.')
     return urlparse(url).scheme=='https' and any(host==base or host.endswith('.'+base) for base in ('nseindia.com','bseindia.com',issuer) if base)
+
+def issuer_url(url,website):
+    host=(urlparse(url).hostname or '').removeprefix('www.')
+    issuer=(urlparse(website or '').hostname or '').removeprefix('www.')
+    return bool(issuer) and urlparse(url).scheme=='https' and (host==issuer or host.endswith('.'+issuer))
+
+def viewer_target(url,website):
+    """Resolve common PDF-viewer query parameters, retaining the primary-host restriction."""
+    query=parse_qs(urlparse(url).query);targets=[]
+    for key in ('pdf','file','url','document','src'):
+        for value in query.get(key,[]):
+            target=urljoin(url,value.strip())
+            if re.search(r'\.pdf$',urlparse(target).path,re.I):
+                if not primary_url(target,website):raise SourceValidation('The PDF viewer target was not an issuer or exchange document link.')
+                targets.append(target)
+    targets=list(dict.fromkeys(targets))
+    if len(targets)>1:raise SourceValidation('The PDF viewer contained ambiguous document targets.')
+    return targets[0] if targets else url
+
+def download_primary_pdf(url,website,kind):
+    """Unwrap primary-site viewers without treating their HTML as a report."""
+    if not primary_url(url,website):raise SourceValidation('Automatic imports accept only issuer or exchange document links.')
+    current=url;seen=set()
+    for _ in range(4):
+        if current in seen:raise SourceValidation('The PDF viewer contained a circular document reference.')
+        seen.add(current)
+        target=viewer_target(current,website)
+        if target!=current:
+            current=target;continue
+        content,actual=connectors.download(current,max_bytes=store.pdf_limit(kind))
+        if content.startswith(b'%PDF-'):return content,actual
+        if not primary_url(actual,website):raise SourceValidation('The document viewer left the issuer or exchange website.')
+        soup=BeautifulSoup(content,'html.parser');embedded=[]
+        for tag,attribute in (('iframe','src'),('embed','src'),('object','data')):
+            for node in soup.find_all(tag):
+                value=node.get(attribute)
+                if value:
+                    child=urljoin(actual,value)
+                    resolved=viewer_target(child,website)
+                    if re.search(r'\.pdf$',urlparse(resolved).path,re.I):embedded.append(resolved)
+        embedded=list(dict.fromkeys(embedded))
+        if len(embedded)!=1:raise SourceValidation('The source did not expose one unambiguous primary PDF.')
+        if not primary_url(embedded[0],website):raise SourceValidation('The embedded PDF was not an issuer or exchange document link.')
+        current=embedded[0]
+    raise SourceValidation('The PDF viewer exceeded the document-resolution limit.')
 
 def acquire(symbol,force=False,progress=None):
     symbol=store.ticker(symbol);emit=progress or (lambda stage,message:None)
@@ -157,8 +211,8 @@ def acquire(symbol,force=False,progress=None):
                     try:
                         if not primary_url(item['url'],profile.get('website')):raise SourceValidation('Automatic imports accept only issuer or exchange document links.')
                         emit('downloading','Downloading '+symbol+' '+item['kind'].replace('_',' ')+'…')
-                        content,url=connectors.download(item['url'],max_bytes=store.pdf_limit(item['kind']))
-                        period=inspect_pdf(content,company,item['kind'])
+                        content,url=download_primary_pdf(item['url'],profile.get('website'),item['kind'])
+                        period=inspect_pdf(content,company,item['kind'],issuer_hosted=issuer_url(item['url'],profile.get('website')) or issuer_url(url,profile.get('website')))
                         if store.rows('SELECT id FROM documents WHERE ticker=? AND kind=? AND period=?',(symbol,item['kind'],period)):continue
                         emit('indexing','Indexing original PDF pages for '+symbol+' · '+period+'…')
                         doc=store.import_pdf(content,symbol,company['company_name']+' · '+period+' · '+item['kind'].replace('_',' '),item['kind'],period,url,item['discovery_url'],verification='automatic_content_checks')

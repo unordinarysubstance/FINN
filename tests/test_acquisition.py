@@ -120,3 +120,43 @@ class AcquisitionTests(unittest.TestCase):
   with patch('acquisition.acquire') as acquire,patch('research.research',return_value={'limitations':[]}) as research:
    ac.acquire_and_research('UNSEEN','Explain revenue','filing-id')
   acquire.assert_not_called();research.assert_called_once_with('UNSEEN','Explain revenue','filing-id',None)
+ def test_encoded_viewer_link_resolves_without_downloading_html(self):
+  viewer='https://issuer.example/pdf-viewer?pdf=%2Fq2.pdf'
+  with patch('acquisition.connectors.download',return_value=(b'%PDF-real-document','https://issuer.example/q2.pdf')) as download:
+   content,url=ac.download_primary_pdf(viewer,'https://issuer.example','transcript')
+  self.assertEqual(content,b'%PDF-real-document');self.assertEqual(url,'https://issuer.example/q2.pdf')
+  download.assert_called_once_with('https://issuer.example/q2.pdf',max_bytes=store.pdf_limit('transcript'))
+ def test_embedded_primary_pdf_and_issuer_link_discovery(self):
+  html=b'<iframe src="/document.pdf"></iframe>'
+  with patch('acquisition.connectors.download',side_effect=[(html,'https://issuer.example/viewer'),(b'%PDF-content','https://issuer.example/document.pdf')]) as download:
+   self.assertEqual(ac.download_primary_pdf('https://issuer.example/viewer','https://issuer.example','transcript')[0],b'%PDF-content')
+  self.assertEqual(download.call_count,2)
+  found,_=ac.issuer_links(b'<a href="/pdf-viewer?pdf=%2FTranscript_Q2.pdf">View</a>','https://issuer.example/investors','https://issuer.example')
+  self.assertEqual(found[0]['kind'],'transcript');self.assertIn('pdf-viewer',found[0]['url'])
+ def test_viewer_cannot_delegate_to_secondary_or_private_host_or_credentials(self):
+  from urllib.parse import urlunsplit
+  # Synthetic userinfo exists only to assert that the resolver rejects it.
+  with_userinfo=urlunsplit(('https','user:password@issuer.example','/report.pdf','',''))
+  for target in ('https://other.example/report.pdf','https://127.0.0.1/report.pdf','http://issuer.example/report.pdf',with_userinfo,'https://issuer.example:8443/report.pdf'):
+   with self.subTest(target=target),patch('acquisition.connectors.download') as download:
+    from urllib.parse import quote
+    with self.assertRaises(ac.SourceValidation):ac.download_primary_pdf('https://issuer.example/viewer?file='+quote(target,safe=''),'https://issuer.example','transcript')
+    download.assert_not_called()
+ def test_ambiguous_viewer_targets_are_rejected(self):
+  with self.assertRaises(ac.SourceValidation):ac.viewer_target('https://issuer.example/viewer?pdf=/one.pdf&file=/two.pdf','https://issuer.example')
+  with patch('acquisition.connectors.download',return_value=(b'<iframe src="/one.pdf"></iframe><object data="/two.pdf"></object>','https://issuer.example/viewer')):
+   with self.assertRaises(ac.SourceValidation):ac.download_primary_pdf('https://issuer.example/viewer','https://issuer.example','transcript')
+ def test_geographic_brand_variant_only_on_issuer_hosted_pdf(self):
+  body=b'%PDF-Unseen Industries Q1 FY27 Earnings Call Transcript. Management says revenue and cash flow improved.'
+  company={'company_name':'Unseen Industries India Limited'}
+  with patch('acquisition.PdfReader',side_effect=self.reader):
+   with self.assertRaises(ac.SourceValidation):ac.inspect_pdf(body,company,'transcript')
+   self.assertEqual(ac.inspect_pdf(body,company,'transcript',issuer_hosted=True),'Q1 FY2027')
+   with self.assertRaises(ac.SourceValidation):ac.inspect_pdf(body,{'company_name':'Another Issuer India Limited'},'transcript',issuer_hosted=True)
+ def test_acquisition_pipeline_imports_primary_pdfs_behind_viewer_urls(self):
+  self.profile['documents'][1]['url']='https://issuer.example/pdf-viewer?pdf=%2Fq2.pdf'
+  self.profile['documents'][2]['url']='https://issuer.example/pdf-viewer?pdf=%2Fq1.pdf'
+  with self.contexts():r=ac.acquire('UNSEEN')
+  self.assertEqual(r['status'],'ready')
+  self.assertEqual({d['period'] for d in r['documents']},{'FY2026','Q1 FY2027','Q2 FY2027'})
+  self.assertTrue(all('pdf-viewer' not in d['url'] for d in r['documents']))

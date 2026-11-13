@@ -14,7 +14,7 @@ The automatic PDF validator was replayed against all twelve real bundled primary
 
 Added generic new-ticker acquisition before API research: company directory resolution/fallbacks, original issuer/exchange PDFs only, identity/type/period inspection, indexing, progress, cached attempts and explicit retry. Tests acquire a company outside all seeds and obtain company-scoped evidence without following it. Added official NSE RSS announcement fallback across followed companies, bounded-history coverage labels and deduplication across API/RSS transports. Added shared-demo HTTP Basic access, a minimal readiness route, proxy-origin tests and a Render Blueprint with persistent storage and a generated secret.
 
-These new integrations have automated tests but not live source/Render acceptance. This executor still cannot resolve external DNS or bind a browser server. Earlier 12/12 live AI and desktop/mobile results below apply to the preceding build; source synthesis protocol is unchanged, while acquisition/access/UI changes need the documented network-enabled and browser checks. No new paid model batch or cloud service was silently started.
+The user confirmed push 9d63c8b, then real automatic HDFCBANK acquisition (one annual report and two transcripts), MARUTI partial acquisition (annual report only), a completed refresh of all eighteen price feeds, and passed Chrome checks at both widths. The RSS endpoint returned a valid recent overnight snapshot without portfolio matches; the date-range API still returned 403. MARUTI transcript links used an HTML viewer and exposed a parser gap. Generic encoded-query/embedded-PDF resolution and issuer-hosted brand-name handling are now fixed and regression-tested; a targeted MARUTI live retry remains. Successful RSS now also supplements configured company-IR pages instead of skipping them. This executor still cannot resolve external DNS or bind a browser server. No new paid model batch or cloud service was silently started.
 
 ## Evidence from real runs
 
@@ -29,7 +29,7 @@ These new integrations have automated tests but not live source/Render acceptanc
 | Announcements | NSE returned HTTP 403. The official Reliance IR fallback imported ten filings and created five alerts. Result is explicitly partial: one of eighteen followed companies. Publication dates with unknown times retain that precision. |
 | Browser | User-terminal Playwright/Chrome run passed twelve interaction checks at each of 1440×1000 and 390×844; no page errors. Representative screenshots inspected. |
 | Fresh package | 24 public PDFs, generated public-only SQLite/FTS index, manifest hashes verified. Clean extracted app started in about 1.3s, served every PDF, returned primary research evidence and preserved saved state across restart. |
-| Automated suite | Latest suite: 92/92 passed in 26.304 seconds. JavaScript syntax and Python compilation passed. |
+| Automated suite | Latest suite: 101/101 passed in 41.246 seconds. JavaScript syntax and Python compilation passed. |
 | Container/cloud/public repository | Container configuration prepared; Docker build and deployment not executed. No public GitHub repository created. |
 
 Private evidence is in `data/verification/`: `evaluate.json`, `source-review.json`, `refresh.json`, `browser/report.json`, browser screenshots and `package.json`. It is excluded from publication because reports can contain investor context. Public documentation summarises results without exporting that state.
