@@ -1,6 +1,6 @@
 # Gemini Flash setup
 
-FINN now defaults to `gemini-3.8-flash` for both drafting and reviewing research. Google currently lists this model with free-tier input/output tokens. Actual access and quotas depend on your project; free access is limited. [Model](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash) · [Pricing](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash) · [Rate limits](https://ai.google.dev/gemini-api/docs/rate-limits).
+FINN now defaults to `gemini-3.6-flash` for both drafting and reviewing research. Google currently lists this model with free-tier input/output tokens. Actual access and quotas depend on your project; free access is limited. [Model](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash) · [Pricing](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.6-flash) · [Rate limits](https://ai.google.dev/gemini-api/docs/rate-limits).
 
 ## Create a key privately
 
@@ -15,7 +15,7 @@ Edit your existing `.env`, preserving unrelated settings. Add/update these setti
 ```dotenv
 FINN_AI_PROVIDER=gemini
 GEMINI_API_KEY=
-FINN_GEMINI_MODEL=gemini-3.8-flash
+FINN_GEMINI_MODEL=gemini-3.6-flash
 FINN_GEMINI_TIMEOUT_SECONDS=120
 ```
 
@@ -45,7 +45,7 @@ A full uncached evaluation uses up to 24 model passes; temporary server failures
 ## Existing Render service
 
 1. Push the reviewed project changes to GitHub.
-2. Open the existing FINN service → Environment. Set FINN_AI_PROVIDER to gemini, FINN_GEMINI_MODEL to gemini-3.8-flash, and GEMINI_API_KEY to your key privately. Remove any hosted OPENAI_API_KEY; old OpenAI model/effort settings can also be removed. Keep the existing FINN access-password and free-hosting settings.
+2. Open the existing FINN service → Environment. Set FINN_AI_PROVIDER to gemini, FINN_GEMINI_MODEL to gemini-3.6-flash, and GEMINI_API_KEY to your key privately. Remove any hosted OPENAI_API_KEY; old OpenAI model/effort settings can also be removed. Keep the existing FINN access-password and free-hosting settings.
 3. Save the environment and use Manual Deploy → Deploy latest commit. Changing render.yaml in Git alone does not change an existing service's environment.
 4. Log in to the hosted app and ask one TCS research question. Confirm the result identifies Gemini Flash and has source quotations. If evidence mode appears, use the returned diagnostics to distinguish missing key, quota, model access, connectivity and validation failures.
 
@@ -61,7 +61,7 @@ OpenAI support is retained for explicitly selected FINN_AI_PROVIDER=openai only.
 
 ## Temporary high demand (HTTP 503)
 
-The owner's first live Gemini smoke request reached Google and returned HTTP 503 UNAVAILABLE with a high-demand message, before the analyst completed. That is an unavailable-provider result, not a successful AI answer. FINN now retries explicit transient server failures up to two times, preserving the same model and payload. Diagnostics show analyst_attempts/reviewer_attempts on completed passes and error.attempts when server retries are exhausted. If Google remains unavailable, the app returns evidence with fallback_code temporarily_unavailable; no failed synthesis is cached.
+The owner's first live Gemini smoke request on the previously selected gemini-3.8-flash reached Google and returned HTTP 503 UNAVAILABLE with a high-demand message, before the analyst completed. That is an unavailable-provider result, not a successful AI answer. FINN now retries explicit transient server failures up to two times, preserving the same model and payload. Diagnostics show analyst_attempts/reviewer_attempts on completed passes and error.attempts when server retries are exhausted. If Google remains unavailable, the app returns evidence with fallback_code temporarily_unavailable; no failed synthesis is cached.
 
 Run `python3 manage.py smoke-ai` again after the update. If all attempts still return 503, wait and retry later. Keep billing disabled and avoid launching the full evaluation until the smoke check passes. If choosing a different model, confirm its current free-tier availability and structured-output support in AI Studio, then set FINN_GEMINI_MODEL explicitly; FINN does not silently switch models. Provider capacity cannot be fixed by local retry code. [Google's retry guidance](https://ai.google.dev/gemini-api/docs/troubleshooting#retry-strategy).
 
@@ -70,3 +70,9 @@ Run `python3 manage.py smoke-ai` again after the update. If all attempts still r
 The owner subsequently received a ReadTimeout after approximately 45 seconds, again before analyst completion. That error alone cannot distinguish provider load, response-generation latency or network delays. Research now allows 120 seconds per Gemini pass by default; FINN_GEMINI_TIMEOUT_SECONDS can set 10-180 seconds. The reviewer uses the same configured limit. Timeout failures record the stage, attempt count and timeout budget without exposing request content or keys. Read timeouts are not automatically retried because the provider might already have generated an answer.
 
 Run check-ai before another full research request. If the tiny probe also times out or reports overload, longer research timeouts cannot establish service availability. If the probe passes but smoke-ai times out, the small request worked; investigate the larger payload, generation latency and intermittent service availability. A passing probe does not validate financial answers. Keep the existing source/reviewer checks and inspect any successful smoke answer against the PDF.
+
+## Confirmed availability — 16 November 2026
+
+The owner explicitly selected gemini-3.6-flash for both passes and ran check-ai. The model listing and tiny JSON probe passed on the first attempt; total diagnostic latency was 3,664 ms. FINN now defaults to that model, and the local .env selection has been saved without changing credentials. This confirms the small request worked at that time, not that full financial research has passed. Next run smoke-ai, inspect its citations, and only then run the research evaluation.
+
+For the existing Render service, set FINN_GEMINI_MODEL=gemini-3.6-flash. Remove an old FINN_GEMINI_REVIEW_MODEL override so it follows that model, or explicitly set it to gemini-3.6-flash too. Push the reviewed changes and manually deploy the latest commit; editing the local .env does not update Render's environment.

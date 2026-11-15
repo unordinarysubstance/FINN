@@ -37,7 +37,7 @@ class GeminiTests(unittest.TestCase):
         self.env.stop();store.DATA=self.old;self.temp.cleanup()
 
     def call(self):
-        return GeminiClient().create(model='gemini-3.8-flash',instructions='Return JSON.',input='{}',
+        return GeminiClient().create(model='gemini-3.6-flash',instructions='Return JSON.',input='{}',
                                      text={'format':{'type':'json_object'}},max_output_tokens=1600)
 
     def test_default_ignores_legacy_openai_models_and_key(self):
@@ -47,7 +47,7 @@ class GeminiTests(unittest.TestCase):
         with patch.dict(os.environ):
             os.environ.pop('FINN_AI_PROVIDER',None)
             config=configuration()
-        self.assertEqual(config['provider'],'gemini');self.assertEqual(config['model'],'gemini-3.8-flash')
+        self.assertEqual(config['provider'],'gemini');self.assertEqual(config['model'],'gemini-3.6-flash')
         self.assertEqual(config['model'],config['review_model'])
         self.assertNotIn('offline-gemini-key',str(config))
 
@@ -63,7 +63,7 @@ class GeminiTests(unittest.TestCase):
             self.assertEqual(request.url.host,'generativelanguage.googleapis.com')
             self.assertNotIn('offline-gemini-key',str(request.url))
             self.assertEqual(request.headers['x-goog-api-key'],'offline-gemini-key')
-            self.assertTrue(str(request.url).endswith('/gemini-3.8-flash:generateContent'))
+            self.assertTrue(str(request.url).endswith('/gemini-3.6-flash:generateContent'))
             body=json.loads(request.content);sent.append(body)
             self.assertNotIn('tools',body);self.assertNotIn('store',body)
             config=body['generationConfig'];self.assertEqual(config['responseMimeType'],'application/json')
@@ -182,7 +182,7 @@ class GeminiTests(unittest.TestCase):
         self.assertNotIn('private transport details',str(result))
 
     def test_check_ai_lists_models_and_uses_one_tiny_probe_without_company_data(self):
-        metadata=[httpx.Response(200,json={'models':[{'name':'models/gemini-3.8-flash','supportedGenerationMethods':['generateContent']}],'nextPageToken':'next-offline-page'}),
+        metadata=[httpx.Response(200,json={'models':[{'name':'models/gemini-3.6-flash','supportedGenerationMethods':['generateContent']}],'nextPageToken':'next-offline-page'}),
                   httpx.Response(200,json={'models':[{'name':'models/gemini-offline-flash','supportedGenerationMethods':['generateContent']}]})]
         with patch('ai_provider.httpx.get',side_effect=metadata) as get,patch('ai_provider.httpx.post',return_value=completion({'ok':True})) as post:
             report=check_ai()
@@ -194,7 +194,7 @@ class GeminiTests(unittest.TestCase):
         self.assertLessEqual(post.call_args.kwargs['timeout'].read,30)
         self.assertNotIn('GEMTEST',str(body));self.assertNotIn('Revenue',str(body));self.assertNotIn('contacts',str(body))
         self.assertNotIn('offline-gemini-key',str(report))
-        self.assertEqual(report['available_flash_models'],['gemini-3.8-flash','gemini-offline-flash'])
+        self.assertEqual(report['available_flash_models'],['gemini-3.6-flash','gemini-offline-flash'])
         self.assertFalse(store.rows('SELECT * FROM cache'))
 
     def test_check_ai_missing_key_does_not_make_requests(self):
@@ -207,10 +207,10 @@ class GeminiTests(unittest.TestCase):
         with patch('ai_provider.httpx.get',return_value=metadata),patch('ai_provider.httpx.post') as post:
             report=check_ai()
         self.assertEqual(report['status'],'failed');self.assertEqual(report['probes'][0]['status'],'not_listed')
-        self.assertEqual(report['model'],'gemini-3.8-flash');post.assert_not_called()
+        self.assertEqual(report['model'],'gemini-3.6-flash');post.assert_not_called()
 
     def test_check_ai_overload_does_not_retry_or_claim_a_success(self):
-        metadata=httpx.Response(200,json={'models':[{'name':'models/gemini-3.8-flash','supportedGenerationMethods':['generateContent']}]})
+        metadata=httpx.Response(200,json={'models':[{'name':'models/gemini-3.6-flash','supportedGenerationMethods':['generateContent']}]})
         with patch('ai_provider.httpx.get',return_value=metadata),patch('ai_provider.httpx.post',return_value=httpx.Response(503,json={})) as post:
             report=check_ai()
         self.assertEqual(report['status'],'failed');self.assertEqual(post.call_count,1)

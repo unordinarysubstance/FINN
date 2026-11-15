@@ -28,7 +28,7 @@ services:
       - key: FINN_AI_PROVIDER
         value: gemini
       - key: FINN_GEMINI_MODEL
-        value: gemini-3.8-flash
+        value: gemini-3.6-flash
       - key: FINN_GEMINI_TIMEOUT_SECONDS
         value: "120"
 # Add GEMINI_API_KEY privately in Render Environment, using a free-tier AI Studio

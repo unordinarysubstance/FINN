@@ -31,7 +31,7 @@ Open http://127.0.0.1:8000. The checkout includes 24 public PDFs and their searc
 
 An API key is optional. Without one, Research returns source passages and PDF links. Generated answers now use Gemini Flash for both drafting and review. Follow [the Gemini setup](docs/GEMINI.md) to create a free-tier Google AI Studio key, then add it to your local `.env` or Render's secret environment. Keep an existing `.env` intact and leave it out of Git.
 
-The default model is `gemini-3.8-flash`. Each uncached answer has two model passes, with up to three HTTP attempts per pass for temporary server failures; a quota or validation failure returns source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
+The default model is `gemini-3.6-flash`. Each uncached answer has two model passes, with up to three HTTP attempts per pass for temporary server failures; a quota or validation failure returns source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
 
 OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI; Gemini needs its own live evaluation once your key is configured.
 

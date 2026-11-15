@@ -12,7 +12,7 @@ def configuration():
     """Safe to expose in diagnostics: credentials are deliberately excluded."""
     provider=os.getenv('FINN_AI_PROVIDER','gemini').strip().lower()
     if provider=='gemini':
-        model=os.getenv('FINN_GEMINI_MODEL','').strip() or 'gemini-3.8-flash'
+        model=os.getenv('FINN_GEMINI_MODEL','').strip() or 'gemini-3.6-flash'
         reviewer=os.getenv('FINN_GEMINI_REVIEW_MODEL','').strip() or model
         configured=bool(os.getenv('GEMINI_API_KEY','').strip())
         effort=''
