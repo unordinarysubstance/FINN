@@ -4,8 +4,66 @@ import json
 import re
 import random
 import time
+import math
+import threading
 from types import SimpleNamespace
 import httpx
+
+class ModelOutputError(ValueError):
+    """A fixed reason and metadata, never generated text or request contents."""
+    def __init__(self,reason,*,finish_reason=None,block_reason=None,attempts=None):
+        super().__init__('Model output failed validation.')
+        self.validation_reason=reason
+        self.finish_reason=finish_reason
+        self.block_reason=block_reason
+        self.attempts=attempts
+
+
+_pace_lock=threading.Lock()
+_next_request={}
+
+def pace_request(model,deadline):
+    interval=float(os.getenv('FINN_GEMINI_REQUEST_INTERVAL_SECONDS','15'))
+    if not math.isfinite(interval) or not 0<=interval<=60:raise ValueError('Invalid Gemini request interval.')
+    if not interval:return
+    # One process/one configured project. Different API keys do not create extra
+    # quota. Keep starts apart across both analyst/reviewer and concurrent jobs.
+    with _pace_lock:
+        now=time.monotonic()
+        wait=max(0,_next_request.get(model,now)-now)
+        if now+wait+1>=deadline:raise httpx.PoolTimeout('Gemini request pacing exhausted the time budget.')
+        if wait:time.sleep(wait)
+        _next_request[model]=time.monotonic()+interval
+
+
+def minute_retry_delay(body):
+    """Only a positively identified minute quota may receive one quota retry."""
+    if not isinstance(body,dict) or not isinstance(body.get('error'),dict):return None
+    error=body['error'];details=error.get('details',[])
+    if error.get('code') in ('quota_exceeded','insufficient_quota','billing_hard_limit_reached','payment_required'):return None
+    if not isinstance(details,list):details=[]
+    scopes=[];delays=[]
+    for detail in details:
+        if not isinstance(detail,dict):continue
+        if str(detail.get('@type','')).endswith('QuotaFailure'):
+            for violation in detail.get('violations',[]):
+                if isinstance(violation,dict):scopes.append(str(violation.get('quotaId','')).lower())
+        if str(detail.get('@type','')).endswith('RetryInfo'):
+            value=detail.get('retryDelay','')
+            if isinstance(value,str) and re.fullmatch(r'\d+(?:\.\d+)?s',value):delays.append(float(value[:-1]))
+    message=str(error.get('message','')).lower()
+    # A daily exhaustion must never be retried, even if RetryInfo is also sent.
+    if any('day' in scope or 'daily' in scope for scope in scopes) or re.search(r'per[ _-]*day|daily',message):return None
+    minute=any('minute' in scope for scope in scopes) or bool(re.search(r'per[ _-]*minute',message))
+    if not delays:
+        match=re.search(r'retry in (\d+(?:\.\d+)?)s',message)
+        if match:delays.append(float(match.group(1)))
+    if minute and delays:
+        value=max(delays)
+        if not math.isfinite(value) or value>59:return None
+        delay=math.ceil(value)+1
+        if 0<delay<=60:return delay
+    return None
 
 
 def configuration():
@@ -40,12 +98,14 @@ class GeminiClient:
         self.responses=self
 
     def _request(self,model,payload,timeout,max_attempts=3):
-        # Retry explicit server failures only. Quota/auth errors and ambiguous
-        # transport failures do not trigger more requests or another provider.
+        # Retry transient server failures and one explicitly timed minute limit.
+        # Daily/unknown quota, auth and ambiguous transport failures stop.
         deadline=time.monotonic()+timeout
+        minute_retried=False
         for attempt in range(1,max_attempts+1):
-            remaining=max(0.01,deadline-time.monotonic())
             try:
+                pace_request(model,deadline)
+                remaining=max(0.01,deadline-time.monotonic())
                 response=httpx.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
                                     headers={'x-goog-api-key':os.environ['GEMINI_API_KEY'].strip()},
                                     json=payload,timeout=httpx.Timeout(remaining,connect=min(10,remaining)),follow_redirects=False)
@@ -53,14 +113,19 @@ class GeminiClient:
                 exc.attempts=attempt
                 exc.timeout_seconds=timeout
                 raise
-            if response.status_code not in (500,502,503,504) or attempt==max_attempts:
+            if attempt==max_attempts:return response,attempt
+            if response.status_code==429 and not minute_retried:
+                try:delay=minute_retry_delay(response.json())
+                except ValueError:delay=None
+                if delay is None or time.monotonic()+delay+1>=deadline:return response,attempt
+                minute_retried=True
+            elif response.status_code in (500,502,503,504):
+                delay=2**(attempt-1)+random.uniform(0,0.25)
+                retry_after=response.headers.get('retry-after','')
+                if retry_after.isdigit():delay=max(delay,int(retry_after))
+                if delay>8 or time.monotonic()+delay+1>=deadline:return response,attempt
+            else:
                 return response,attempt
-            delay=2**(attempt-1)+random.uniform(0,0.25)
-            # Honor a numeric Retry-After, without sleeping beyond this call's
-            # budget. Long waits return the error for an explicit later retry.
-            retry_after=response.headers.get('retry-after','')
-            if retry_after.isdigit():delay=max(delay,int(retry_after))
-            if delay>8 or time.monotonic()+delay+1>=deadline:return response,attempt
             response.close()
             time.sleep(delay)
 
@@ -83,13 +148,17 @@ class GeminiClient:
             try:body=response.json()
             except ValueError:body={}
             if response.status_code!=200:raise GeminiError(response.status_code,body,attempts)
-            if not isinstance(body,dict):raise ValueError('Invalid Gemini response.')
+            if not isinstance(body,dict):raise ModelOutputError('invalid_response',attempts=attempts)
             candidates=body.get('candidates',[])
-            if len(candidates)!=1 or candidates[0].get('finishReason')!='STOP':
-                raise ValueError('Incomplete model output.')
+            if not isinstance(candidates,list) or len(candidates)!=1 or not isinstance(candidates[0],dict):
+                feedback=body.get('promptFeedback',{})
+                raise ModelOutputError('missing_candidates',block_reason=feedback.get('blockReason') if isinstance(feedback,dict) else None,attempts=attempts)
+            if candidates[0].get('finishReason')!='STOP':
+                raise ModelOutputError('incomplete_output',finish_reason=candidates[0].get('finishReason'),attempts=attempts)
             # Never feed thought parts to the JSON parser or expose them in results.
             output=''.join(p['text'] for p in candidates[0].get('content',{}).get('parts',[])
                            if isinstance(p.get('text'),str) and not p.get('thought'))
+            if not output.strip():raise ModelOutputError('empty_output',finish_reason='STOP',attempts=attempts)
             usage=body.get('usageMetadata',{})
             return SimpleNamespace(output_text=output,status='completed',attempts=attempts,usage=SimpleNamespace(
                 input_tokens=usage.get('promptTokenCount'),

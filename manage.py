@@ -69,7 +69,7 @@ def prepare(manifest,include_historical=False,local_dir=None):
         results.append(record)
     return {'checked_at':store.now(),'documents':results,'coverage':[store.coverage(s) for s in sorted({i['ticker'] for i in items})]}
 
-def evaluate(symbols,question_indexes=None):
+def evaluate(symbols,question_indexes=None,progress=None):
     indexes=list(question_indexes) if question_indexes is not None else list(range(1,len(QUESTIONS)+1))
     if not indexes or any(type(i) is not int or not 1<=i<=len(QUESTIONS) for i in indexes):raise ValueError('Unsupported evaluation question index.')
     answers=[]
@@ -83,6 +83,7 @@ def evaluate(symbols,question_indexes=None):
             result['automated_acceptance']=bool(result['mode']=='ai' and result['findings'] and valid and result['diagnostics'].get('reviewer_completed'))
             result['manual_review']='pending; inspect each finding against its cited passage and original page'
             answers.append(result)
+            if progress:progress(symbol,question_index,result,len(answers),len(symbols)*len(indexes))
     return {'checked_at':store.now(),'selection':{'symbols':symbols,'question_indexes':indexes},'answers':answers,'passed_automated':sum(a['automated_acceptance'] for a in answers),'required':len(answers),'manual_review_complete':False}
 
 def verify(manifest,include_historical,symbols):
@@ -138,7 +139,14 @@ def main():
     elif args.command=='acquire':
         from acquisition import acquire
         result={'companies':[acquire(s,args.force) for s in args.symbols]}
-    elif args.command=='evaluate':result=evaluate(args.symbols,[args.question_index] if args.question_index else None)
+    elif args.command=='evaluate':
+        def evaluation_progress(symbol,index,answer,completed,total):
+            diagnostics=answer.get('diagnostics',{});error=diagnostics.get('error',{})
+            status='passed' if answer['automated_acceptance'] else diagnostics.get('fallback_code','no_retained_findings')
+            if error.get('validation_reason'):status+=': '+error['validation_reason']
+            if error.get('finish_reason'):status+=' ('+error['finish_reason']+')'
+            print(f'{completed}/{total} {symbol} question {index}: {status}',flush=True)
+        result=evaluate(args.symbols,[args.question_index] if args.question_index else None,progress=evaluation_progress)
     elif args.command=='verify':result=verify(args.manifest,args.include_historical,args.symbols)
     elif args.command=='check-ai':result=check_ai()
     elif args.command=='smoke-ai':

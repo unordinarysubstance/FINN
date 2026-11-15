@@ -8,7 +8,8 @@ import unittest
 from unittest.mock import patch
 import httpx
 import store
-from ai_provider import configuration,GeminiClient,GeminiError,check_ai,gemini_timeout
+from ai_provider import configuration,GeminiClient,GeminiError,check_ai,gemini_timeout,pace_request,minute_retry_delay
+import ai_provider
 from diagnostics import failure
 from research import research
 
@@ -24,6 +25,7 @@ class GeminiTests(unittest.TestCase):
         self.env=patch.dict(os.environ,{'FINN_AI_PROVIDER':'gemini','GEMINI_API_KEY':'offline-gemini-key',
             'FINN_GEMINI_MODEL':'','FINN_GEMINI_REVIEW_MODEL':'',
             'FINN_GEMINI_TIMEOUT_SECONDS':'120',
+            'FINN_GEMINI_REQUEST_INTERVAL_SECONDS':'0',
             'OPENAI_API_KEY':'offline-openai-key','FINN_MODEL':'gpt-4o-mini','FINN_REVIEW_MODEL':'gpt-6.1-sol'})
         self.env.start()
         self.temp=tempfile.TemporaryDirectory();self.old=store.DATA;store.DATA=Path(self.temp.name)
@@ -72,6 +74,11 @@ class GeminiTests(unittest.TestCase):
             data=json.loads(body['contents'][0]['parts'][0]['text'])
             self.assertNotIn('contacts',data)
             if len(sent)==1:
+                schema=config['responseJsonSchema']
+                self.assertEqual(schema['type'],'object')
+                self.assertEqual(schema['required'],['findings','limitations'])
+                enum=schema['properties']['findings']['items']['properties']['sources']['items']['enum']
+                self.assertEqual(enum,[self.cid])
                 return completion({'findings':[{'text':'FY2026 consolidated revenue was 100 crore.','kind':'fact','sources':[self.cid]}],'limitations':[]})
             enum=config['responseJsonSchema']['properties']['checks']['items']['properties']['supports']['items']['properties']['source']['enum']
             self.assertEqual(enum,[self.cid])
@@ -238,3 +245,50 @@ class GeminiTests(unittest.TestCase):
     def test_google_key_pattern_is_redacted_even_when_not_in_environment(self):
         report=failure(GeminiError(400,{'error':{'message':'Invalid key '+('AIza'+'syntheticfixture')+' https://example.org/?key=secret'}}))
         self.assertNotIn('syntheticfixture',str(report));self.assertNotIn('https://',str(report))
+
+    def test_request_pacing_spaces_both_passes_and_subsequent_requests(self):
+        clock=[0.0];starts=[]
+        def sleep(seconds):clock[0]+=seconds
+        with patch.dict(os.environ,{'FINN_GEMINI_REQUEST_INTERVAL_SECONDS':'15'}),patch.dict(ai_provider._next_request,{},clear=True),patch('ai_provider.time.monotonic',side_effect=lambda:clock[0]),patch('ai_provider.time.sleep',side_effect=sleep):
+            for _ in range(6):
+                pace_request('gemini-3.6-flash',clock[0]+120)
+                starts.append(clock[0])
+        self.assertEqual(starts,[0,15,30,45,60,75])
+
+    def test_pacing_stops_before_spending_an_expired_budget(self):
+        with patch.dict(os.environ,{'FINN_GEMINI_REQUEST_INTERVAL_SECONDS':'15'}),patch.dict(ai_provider._next_request,{'gemini-3.6-flash':100},clear=True),patch('ai_provider.time.monotonic',return_value=0),patch('ai_provider.time.sleep') as sleep:
+            with self.assertRaises(httpx.PoolTimeout):pace_request('gemini-3.6-flash',30)
+        sleep.assert_not_called()
+
+    def test_known_minute_limit_waits_once_then_retries(self):
+        error={'error':{'message':'Please check your plan and billing details. Requests per minute limit exceeded. Please retry in 1.25s.'}}
+        responses=[httpx.Response(429,json=error),completion({})]
+        with patch('ai_provider.httpx.post',side_effect=responses) as post,patch('ai_provider.time.sleep') as sleep:
+            result=self.call()
+        self.assertEqual(result.attempts,2);self.assertEqual(post.call_count,2)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list],[3])
+
+    def test_repeated_minute_limit_stops_after_single_quota_retry(self):
+        error={'error':{'message':'per minute limit exceeded. Please retry in 1s.'}}
+        with patch('ai_provider.httpx.post',side_effect=[httpx.Response(429,json=error),httpx.Response(429,json=error)]) as post,patch('ai_provider.time.sleep') as sleep:
+            with self.assertRaises(GeminiError) as error:self.call()
+        self.assertEqual(post.call_count,2);self.assertEqual(error.exception.attempts,2);self.assertEqual(sleep.call_count,1)
+
+    def test_structured_quota_hints_distinguish_minute_daily_and_unknown(self):
+        def body(quota):return {'error':{'details':[{'@type':'type.googleapis.com/google.rpc.QuotaFailure','violations':[{'quotaId':quota}]},{'@type':'type.googleapis.com/google.rpc.RetryInfo','retryDelay':'12.5s'}]}}
+        self.assertEqual(minute_retry_delay(body('GenerateRequestsPerMinutePerProjectPerModel-FreeTier')),14)
+        self.assertIsNone(minute_retry_delay(body('GenerateRequestsPerDayPerProjectPerModel-FreeTier')))
+        self.assertIsNone(minute_retry_delay(body('UnknownQuota')))
+        self.assertIsNone(minute_retry_delay({'error':{'message':'daily and per minute limit exceeded, retry in 1s'}}))
+
+    def test_output_diagnostics_identify_blocked_truncated_and_nonobject_without_text(self):
+        cases=[(completion({},'MAX_TOKENS'),{'validation_reason':'incomplete_output','finish_reason':'MAX_TOKENS'}),
+               (httpx.Response(200,json={'promptFeedback':{'blockReason':'SAFETY'}}),{'validation_reason':'missing_candidates','block_reason':'SAFETY'}),
+               (completion([]),{'validation_reason':'expected_json_object'}),
+               (httpx.Response(200,json={'candidates':[{'finishReason':'STOP','content':{'parts':[{'text':'private input offline-gemini-key'}]}}]}),{'validation_reason':'invalid_json'})]
+        for response,expected in cases:
+            with self.subTest(expected=expected),patch('ai_provider.httpx.post',return_value=response):
+                result=research('GEMTEST','revenue cash flow')
+                error=result['diagnostics']['error']
+                for key,value in expected.items():self.assertEqual(error[key],value)
+                self.assertNotIn('private input',str(error));self.assertNotIn('offline-gemini-key',str(error))

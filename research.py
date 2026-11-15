@@ -7,9 +7,17 @@ import unicodedata
 from store import retrieve,rows,db,ticker,coverage
 from seed import contacts
 from diagnostics import failure
-from ai_provider import configuration,client_for,gemini_timeout
+from ai_provider import configuration,client_for,gemini_timeout,ModelOutputError
 
-PIPELINE_VERSION=7
+PIPELINE_VERSION=8
+
+def analyst_format(source_ids):
+    finding={'type':'object','properties':{'text':{'type':'string'},'kind':{'type':'string','enum':['fact','interpretation']},
+             'sources':{'type':'array','items':{'type':'string','enum':sorted(source_ids)}}},
+             'required':['text','kind','sources'],'additionalProperties':False}
+    return {'type':'json_schema','name':'research_draft','strict':True,'schema':{'type':'object',
+        'properties':{'findings':{'type':'array','items':finding},'limitations':{'type':'array','items':{'type':'string'}}},
+        'required':['findings','limitations'],'additionalProperties':False}}
 
 def answer_limitations(findings):
     """Do not present unreviewed analyst assertions about missing disclosure as facts."""
@@ -113,9 +121,10 @@ def citation(row):
 
 def parse_response(response):
     if getattr(response,'status','completed') not in ('completed',None):
-        raise ValueError('Incomplete model output.')
-    parsed=json.loads(response.output_text)
-    if not isinstance(parsed,dict): raise ValueError('Expected JSON object.')
+        raise ModelOutputError('incomplete_output')
+    try:parsed=json.loads(response.output_text)
+    except (json.JSONDecodeError,TypeError):raise ModelOutputError('invalid_json') from None
+    if not isinstance(parsed,dict): raise ModelOutputError('expected_json_object')
     return parsed
 
 def token_usage(response):
@@ -173,7 +182,7 @@ def research(symbol,question,document_id=None,periods=None):
           'Keep cash equivalents distinct from cash plus investments; free cash flow distinct from operating cash flow; before-tax profit distinct from net profit; and before-working-capital figures distinct from after-working-capital cash flow. Never rename a line item or infer operational efficiency from its size. '
           'If asked about management outlook, distinguish dated explicit guidance from aspirations. Company-wide debt claims require an actual borrowing disclosure in their cited passage. No BUY/SELL score. A filing is not an annual report. Report missing evidence; abstain if insufficient.')
         instructions+=' In call transcripts, distinguish analyst questions from management statements: never present an unconfirmed premise in a question as a company-disclosed fact. Do not infer proven demand growth from launching a product or platform. Do not infer balance-sheet asset/liability movement from a cash-flow adjustment sign. Do not calculate differences or ratios; report the printed figures with their exact labels and basis.'
-        draft=client.responses.create(model=model,store=False,instructions=instructions,input=json.dumps({'output_instruction':'Return the findings and limitations as JSON.','question':question,'scope':result['scope'],'selected_periods':periods or [],'evidence':source_data}),text={'format':{'type':'json_object'}},max_output_tokens=8192 if gemini else 1600,timeout=request_timeout)
+        draft=client.responses.create(model=model,store=False,instructions=instructions,input=json.dumps({'output_instruction':'Return the findings and limitations as JSON.','question':question,'scope':result['scope'],'selected_periods':periods or [],'evidence':source_data}),text={'format':analyst_format(allowed)},max_output_tokens=8192 if gemini else 1600,timeout=request_timeout)
         parsed=parse_response(draft)
         result['diagnostics'].update(analyst_completed=True,analyst_usage=token_usage(draft),analyst_attempts=getattr(draft,'attempts',1))
         if not isinstance(parsed.get('findings'),list) or not isinstance(parsed.get('limitations',[]),list): raise ValueError('Invalid analyst schema.')

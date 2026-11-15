@@ -92,3 +92,10 @@ class ClaimSupportTests(unittest.TestCase):
   self.assertEqual(check['properties']['supports']['items']['properties']['source']['enum'],['S1134'])
   self.assertEqual(check['properties']['index']['enum'],[0])
   self.assertFalse(check['additionalProperties'])
+ def test_analyst_schema_requires_object_and_limits_source_ids(self):
+  from research import analyst_format
+  schema=analyst_format({'S42','S1134'})['schema']
+  self.assertEqual(schema['type'],'object');self.assertFalse(schema['additionalProperties'])
+  finding=schema['properties']['findings']['items']
+  self.assertEqual(set(finding['required']),{'text','kind','sources'})
+  self.assertEqual(finding['properties']['sources']['items']['enum'],['S1134','S42'])

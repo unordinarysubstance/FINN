@@ -58,3 +58,9 @@ class PreparationTests(unittest.TestCase):
    status=manage.main()
   self.assertEqual(status,1);research.assert_not_called()
   self.assertEqual(json.loads((store.DATA/'verification'/'check-ai.json').read_text()),report)
+ def test_evaluation_progress_reports_each_completed_answer(self):
+  from unittest.mock import Mock
+  progress=Mock()
+  answer={'mode':'ai','findings':[{'sources':['S1']}],'citations':[{'id':'S1'}],'diagnostics':{'reviewer_completed':True}}
+  with patch('manage.research',return_value=answer):result=manage.evaluate(['TEST'],[2],progress=progress)
+  progress.assert_called_once_with('TEST',2,result['answers'][0],1,1)

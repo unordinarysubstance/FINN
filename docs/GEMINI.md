@@ -17,6 +17,7 @@ FINN_AI_PROVIDER=gemini
 GEMINI_API_KEY=
 FINN_GEMINI_MODEL=gemini-3.6-flash
 FINN_GEMINI_TIMEOUT_SECONDS=120
+FINN_GEMINI_REQUEST_INTERVAL_SECONDS=15
 ```
 
 Restart the server after saving. Exported environment variables take precedence over `.env`; remove any old exported `FINN_AI_PROVIDER=openai` selection. Older FINN_MODEL/FINN_REVIEW_MODEL settings apply only to OpenAI and do not override Gemini. The optional FINN_GEMINI_REVIEW_MODEL overrides only the Gemini reviewer, otherwise it uses the drafting model.
@@ -40,7 +41,7 @@ python3 manage.py evaluate --symbols TCS --question-index 1
 python3 manage.py evaluate
 ```
 
-A full uncached evaluation uses up to 24 model passes; temporary server failures can increase that to 72 HTTP attempts. A small free quota may interrupt it. Structural pass counts do not establish factual correctness. Gemini needs its own original-page review; the older OpenAI evaluation does not validate this provider.
+A full uncached evaluation uses up to 24 model passes; temporary server failures can increase that to 72 HTTP attempts. With default pacing, an uncached run takes roughly six minutes plus generation/retry time. Progress prints after each answer. Other processes using the same Google project can still consume its quota. Structural pass counts do not establish factual correctness. Gemini needs its own original-page review; the older OpenAI evaluation does not validate this provider.
 
 ## Existing Render service
 
@@ -53,7 +54,7 @@ The key remains on the backend. No additional Python dependency is needed: the t
 
 ## Quotas and data use
 
-Each uncached answer has two model passes, each limited to three HTTP attempts. Temporary HTTP 500/502/503/504 errors get short exponential backoff with jitter within the pass's remaining time budget; quota/authentication errors, invalid output and ambiguous transport failures are not retried. Cached answers reuse the same evidence/provider/model configuration. There is no paid-provider failover, Google Search grounding or model tool use. Quota exhaustion or provider/validation failure returns source evidence. FINN cannot determine your project's billing status from its API key; the free-tier project setting is what prevents API charges.
+Each uncached answer has two model passes, each limited to three HTTP attempts. Temporary HTTP 500/502/503/504 errors get short exponential backoff with jitter within the pass's remaining time budget; an explicitly identified per-minute quota with a retry hint gets at most one cooldown retry within that pass's time budget. Daily/unknown quotas, authentication errors, invalid output and ambiguous transport failures are not retried. Cached answers reuse the same evidence/provider/model configuration. There is no paid-provider failover, Google Search grounding or model tool use. Quota exhaustion or provider/validation failure returns source evidence. FINN cannot determine your project's billing status from its API key; the free-tier project setting is what prevents API charges.
 
 Google's free-tier terms allow inputs and outputs to be used to improve its products. FINN sends the question and selected source passages, never contact profiles. Use public documents and avoid confidential questions/uploads with this free API. This differs from the earlier OpenAI store=False configuration. [Terms](https://ai.google.dev/gemini-api/terms).
 
@@ -73,6 +74,16 @@ Run check-ai before another full research request. If the tiny probe also times 
 
 ## Confirmed availability — 16 November 2026
 
-The owner explicitly selected gemini-3.6-flash for both passes and ran check-ai. The model listing and tiny JSON probe passed on the first attempt; total diagnostic latency was 3,664 ms. FINN now defaults to that model, and the local .env selection has been saved without changing credentials. That small availability check has now been followed by a successful live smoke-ai run: both passes completed on their first attempt in 9,384 ms, with no rejected or revised claims. The two retained findings were checked against the original archived TCS PDF pages 1 and 14; their supporting spans and reported metrics match. This verifies one filing example. The broader annual-report/transcript evaluation is still pending.
+The owner explicitly selected gemini-3.6-flash for both passes and ran check-ai. The model listing and tiny JSON probe passed on the first attempt; total diagnostic latency was 3,664 ms. FINN now defaults to that model, and the local .env selection has been saved without changing credentials. That small availability check has now been followed by a successful live smoke-ai run: both passes completed on their first attempt in 9,384 ms, with no rejected or revised claims. The two retained findings were checked against the original archived TCS PDF pages 1 and 14; their supporting spans and reported metrics match. This verifies one filing example. The initial broader annual-report/transcript evaluation passed 2/12 structural checks; pipeline 8 verification is pending.
 
 For the existing Render service, set FINN_GEMINI_MODEL=gemini-3.6-flash. Remove an old FINN_GEMINI_REVIEW_MODEL override so it follows that model, or explicitly set it to gemini-3.6-flash too. Push the reviewed changes and manually deploy the latest commit; editing the local .env does not update Render's environment.
+
+## First full evaluation and pipeline 8
+
+The first Gemini batch passed 2/12 structural checks. Five requests hit the project's stated free-tier limit of five requests per minute; five failed analyst output validation before synthesis. The old report did not record why those outputs failed, so malformed JSON, truncation and blocked output cannot be distinguished retrospectively. A small filing smoke success did not establish full-batch readiness.
+
+Pipeline 8 spaces Gemini request starts 15 seconds apart per configured model in one process, across both passes and concurrent jobs. FINN_GEMINI_REQUEST_INTERVAL_SECONDS accepts 0-60; use the default 15 for this account. Limits are per Google project, so separate FINN processes or other apps are not coordinated by this local limiter. An explicit minute-quota RetryInfo hint permits one bounded cooldown retry; daily and unknown quota errors never trigger quota retries. There is no paid-provider failover. [Google's quota scopes](https://ai.google.dev/gemini-api/docs/rate-limits).
+
+The analyst now uses a strict object schema requiring findings and limitations, with source IDs constrained to retrieved evidence. The reviewer and numeric/source-line checks remain in force. Validation errors expose only fixed reasons and safe finish/block metadata, such as validation_reason incomplete_output and finish_reason MAX_TOKENS. They never expose response text. Pipeline 8 uses a separate cache identity from the earlier prompt protocol.
+
+First rerun a previously failed question: `python3 manage.py evaluate --symbols TCS --question-index 2`. If it succeeds, run the full evaluation. Review the progress line and report diagnostics if it fails; a validation failure may still need provider-specific diagnosis. The 2/12 batch remains recorded as a failed acceptance run; the update is not claimed as live-verified until rerun.

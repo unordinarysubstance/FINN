@@ -59,6 +59,12 @@ def failure(exc):
     if type(attempts) is int:result['attempts']=attempts
     timeout=getattr(exc,'timeout_seconds',None)
     if type(timeout) in (int,float):result['timeout_seconds']=timeout
+    reason=getattr(exc,'validation_reason',None)
+    if reason in ('invalid_response','missing_candidates','incomplete_output','empty_output','invalid_json','expected_json_object'):
+        result['validation_reason']=reason
+    for key in ('finish_reason','block_reason'):
+        value=getattr(exc,key,None)
+        if isinstance(value,str) and re.fullmatch(r'[A-Z_]{1,64}',value):result[key]=safe_provider_message(value)
     body=getattr(exc,'body',None)
     if isinstance(body,dict):
         error=body.get('error',body)
