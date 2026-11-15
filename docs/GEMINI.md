@@ -16,11 +16,18 @@ Edit your existing `.env`, preserving unrelated settings. Add/update these setti
 FINN_AI_PROVIDER=gemini
 GEMINI_API_KEY=
 FINN_GEMINI_MODEL=gemini-3.8-flash
+FINN_GEMINI_TIMEOUT_SECONDS=120
 ```
 
 Restart the server after saving. Exported environment variables take precedence over `.env`; remove any old exported `FINN_AI_PROVIDER=openai` selection. Older FINN_MODEL/FINN_REVIEW_MODEL settings apply only to OpenAI and do not override Gemini. The optional FINN_GEMINI_REVIEW_MODEL overrides only the Gemini reviewer, otherwise it uses the drafting model.
 
-Run one small check first:
+First check provider availability without uploading any company passages:
+
+```sh
+python3 manage.py check-ai
+```
+
+This lists Flash models advertised by Google and sends one tiny JSON probe per configured model (one probe when analyst/reviewer use the same model). The probe has a 30-second timeout, a 1,024-token output budget and no retries. Listing a model does not prove free quota or current capacity. No model is replaced automatically. If the diagnostic passes, run the full research smoke check:
 
 ```sh
 python3 manage.py smoke-ai
@@ -57,3 +64,9 @@ OpenAI support is retained for explicitly selected FINN_AI_PROVIDER=openai only.
 The owner's first live Gemini smoke request reached Google and returned HTTP 503 UNAVAILABLE with a high-demand message, before the analyst completed. That is an unavailable-provider result, not a successful AI answer. FINN now retries explicit transient server failures up to two times, preserving the same model and payload. Diagnostics show analyst_attempts/reviewer_attempts on completed passes and error.attempts when server retries are exhausted. If Google remains unavailable, the app returns evidence with fallback_code temporarily_unavailable; no failed synthesis is cached.
 
 Run `python3 manage.py smoke-ai` again after the update. If all attempts still return 503, wait and retry later. Keep billing disabled and avoid launching the full evaluation until the smoke check passes. If choosing a different model, confirm its current free-tier availability and structured-output support in AI Studio, then set FINN_GEMINI_MODEL explicitly; FINN does not silently switch models. Provider capacity cannot be fixed by local retry code. [Google's retry guidance](https://ai.google.dev/gemini-api/docs/troubleshooting#retry-strategy).
+
+## Read timeout during research
+
+The owner subsequently received a ReadTimeout after approximately 45 seconds, again before analyst completion. That error alone cannot distinguish provider load, response-generation latency or network delays. Research now allows 120 seconds per Gemini pass by default; FINN_GEMINI_TIMEOUT_SECONDS can set 10-180 seconds. The reviewer uses the same configured limit. Timeout failures record the stage, attempt count and timeout budget without exposing request content or keys. Read timeouts are not automatically retried because the provider might already have generated an answer.
+
+Run check-ai before another full research request. If the tiny probe also times out or reports overload, longer research timeouts cannot establish service availability. If the probe passes but smoke-ai times out, the small request worked; investigate the larger payload, generation latency and intermittent service availability. A passing probe does not validate financial answers. Keep the existing source/reviewer checks and inspect any successful smoke answer against the PDF.

@@ -57,6 +57,8 @@ def failure(exc):
     if type(status) is int: result['http_status']=status
     attempts=getattr(exc,'attempts',None)
     if type(attempts) is int:result['attempts']=attempts
+    timeout=getattr(exc,'timeout_seconds',None)
+    if type(timeout) in (int,float):result['timeout_seconds']=timeout
     body=getattr(exc,'body',None)
     if isinstance(body,dict):
         error=body.get('error',body)

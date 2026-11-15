@@ -6,8 +6,8 @@
   },
   {
     "path": ".env.example",
-    "bytes": 1334,
-    "sha256": "b4efbcefc4e04206cddbeb7fac9c2c5e2aed0a146616092756771f1f99ee4758"
+    "bytes": 1440,
+    "sha256": "cb72b499508b572d8ba29689a19c6111dce2154b1c1696d8adeac00538d4ff87"
   },
   {
     "path": ".gitignore",
@@ -26,13 +26,13 @@
   },
   {
     "path": "README.md",
-    "bytes": 7481,
-    "sha256": "2b571c96e81f0995c06af3ad5bd9b22e00f896e59a495d30735805a209c4afa2"
+    "bytes": 7508,
+    "sha256": "b36d6a0d4f751f58d9348b25881f74e7c392ca55a9c13973ef21509842f43e85"
   },
   {
     "path": "VERIFICATION.md",
-    "bytes": 12488,
-    "sha256": "929769cd9e19102f58e531cb2b2c5730df610cbf9b8a537662993e98cfffe4d8"
+    "bytes": 13312,
+    "sha256": "b995727f4187302f779ee1d920d1c30dab6aad481efa888eb505affbf54018ac"
   },
   {
     "path": "access.py",
@@ -46,8 +46,8 @@
   },
   {
     "path": "ai_provider.py",
-    "bytes": 5124,
-    "sha256": "21e9cc76d1fe4d30dfa816bc9c64243720ed6872602a0167c695409169666e13"
+    "bytes": 8931,
+    "sha256": "bcfbb1ad8cca851c701a1cadba285669ced2cf545efedff05caa7faa136600a7"
   },
   {
     "path": "announcements.py",
@@ -72,7 +72,7 @@
   {
     "path": "demo_data/public.sqlite3",
     "bytes": 14065664,
-    "sha256": "43734265fb9656277e1e84265b32fb69e6f89d5009fc483e6b411ef53c1f6cba"
+    "sha256": "5a0e9ead48d7ff59636c578b9d7b9be57d29a8c49ccd7123b9544a8618f985dc"
   },
   {
     "path": "demo_documents/BAJFINANCE.pdf",
@@ -196,8 +196,8 @@
   },
   {
     "path": "diagnostics.py",
-    "bytes": 4587,
-    "sha256": "5f6a42abd6f42f4c8b15fd8152eb063cba0b8d30260734b0f2a759562ce74f54"
+    "bytes": 4705,
+    "sha256": "8d3338086c5f9996e2c1d9ea7797ec3238bdab75df78a0e1a366e5ac8317205f"
   },
   {
     "path": "docs/CHALLENGE_AUDIT.md",
@@ -211,18 +211,18 @@
   },
   {
     "path": "docs/DEPLOYMENT.md",
-    "bytes": 5521,
-    "sha256": "fe3d5c1b87345ea9c05c7f4d4b01d25c8a4010df1cc9e1349577fcb41c688381"
+    "bytes": 5962,
+    "sha256": "cd5add5cdc977618fce80d712b1c449ab21bda3d3374a87a83f9f17ad1afee54"
   },
   {
     "path": "docs/EVALUATION.md",
-    "bytes": 7754,
-    "sha256": "7562d46f8b5a6b21a4dac3cf52fec92f28e667e6ee6997d44df458b3dd83f799"
+    "bytes": 8112,
+    "sha256": "a5024c6d36d980abffcfe453d07da7c5f5fef94066015705326e69470df1f321"
   },
   {
     "path": "docs/GEMINI.md",
-    "bytes": 5736,
-    "sha256": "43aba5db3a599bf67756600fe9709162da167961b554808a0cf56f8282335194"
+    "bytes": 7339,
+    "sha256": "f3c5e5a4297e7e1c726c32a7c062a95bf5f14c18e722cd190c0ce7c8a0dabcd8"
   },
   {
     "path": "docs/SOURCE_DISCOVERY.md",
@@ -251,8 +251,8 @@
   },
   {
     "path": "manage.py",
-    "bytes": 13228,
-    "sha256": "6a6b45b42846f84dab0f61016e57c867cec562a1c5ec233652a4890bd9cf0e64"
+    "bytes": 13441,
+    "sha256": "dcce1aed29b22f0f7623a9a8d0341bf56fc9a4eb6e66812b2199e322161f0082"
   },
   {
     "path": "monitoring.py",
@@ -271,8 +271,8 @@
   },
   {
     "path": "render.yaml",
-    "bytes": 1043,
-    "sha256": "3317d513bb6f44b71db4617b220b207db6c18000b4c70f2e002955705ab3f8bd"
+    "bytes": 1105,
+    "sha256": "4166f79837eccbd79620e69367c8a049c39d164d4a594c7523b76e8d58011f65"
   },
   {
     "path": "requirements-dev.txt",
@@ -286,8 +286,8 @@
   },
   {
     "path": "research.py",
-    "bytes": 20475,
-    "sha256": "bcc6d7b8d0ad5111953d98dc19aa688cc56b55dce9408b0784725f8d980b040d"
+    "bytes": 20878,
+    "sha256": "3e67ce3413df39e20b35bf26b0223031a40a19423f123e4deb1e8e10519f7717"
   },
   {
     "path": "seed.py",
@@ -356,8 +356,8 @@
   },
   {
     "path": "tests/test_gemini.py",
-    "bytes": 13208,
-    "sha256": "cac81233b3beaa2e4bd0dc484574b44261c152a7aa0c93a165df7a63b7684820"
+    "bytes": 17250,
+    "sha256": "17b6510877240bf17130337b0d8572a675b3f22011202ad12e972abeb6251d2f"
   },
   {
     "path": "tests/test_hosted_access.py",
@@ -366,8 +366,8 @@
   },
   {
     "path": "tests/test_preparation.py",
-    "bytes": 3933,
-    "sha256": "765f4f1863f6ecc764ff0b3653935e9158903584dad265ced56626b70ff3ce0f"
+    "bytes": 4453,
+    "sha256": "859b132ba946d833c2383cd35a4e80955c0f3bd2ce5c23dbcc98497736591e80"
   },
   {
     "path": "tests/test_public_seed.py",

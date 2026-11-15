@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 import httpx
 import store
-from ai_provider import configuration,GeminiClient,GeminiError
+from ai_provider import configuration,GeminiClient,GeminiError,check_ai,gemini_timeout
 from diagnostics import failure
 from research import research
 
@@ -23,6 +23,7 @@ class GeminiTests(unittest.TestCase):
     def setUp(self):
         self.env=patch.dict(os.environ,{'FINN_AI_PROVIDER':'gemini','GEMINI_API_KEY':'offline-gemini-key',
             'FINN_GEMINI_MODEL':'','FINN_GEMINI_REVIEW_MODEL':'',
+            'FINN_GEMINI_TIMEOUT_SECONDS':'120',
             'OPENAI_API_KEY':'offline-openai-key','FINN_MODEL':'gpt-4o-mini','FINN_REVIEW_MODEL':'gpt-6.1-sol'})
         self.env.start()
         self.temp=tempfile.TemporaryDirectory();self.old=store.DATA;store.DATA=Path(self.temp.name)
@@ -161,7 +162,59 @@ class GeminiTests(unittest.TestCase):
         replies=[httpx.Response(503,json={}),completion({})]
         with patch('ai_provider.httpx.post',side_effect=replies) as post,patch('ai_provider.time.sleep'),patch('ai_provider.random.uniform',return_value=0),patch('ai_provider.time.monotonic',side_effect=[0,0,1,3]):
             self.call()
-        self.assertEqual([c.kwargs['timeout'].read for c in post.call_args_list],[45,42])
+        self.assertEqual([c.kwargs['timeout'].read for c in post.call_args_list],[120,117])
+
+    def test_timeout_configuration_is_bounded(self):
+        self.assertEqual(gemini_timeout(),120)
+        for value in ('10','180'):
+            with patch.dict(os.environ,{'FINN_GEMINI_TIMEOUT_SECONDS':value}):self.assertEqual(gemini_timeout(),int(value))
+        for value in ('0','181','not-a-number'):
+            with patch.dict(os.environ,{'FINN_GEMINI_TIMEOUT_SECONDS':value}):
+                with self.assertRaises(ValueError):gemini_timeout()
+
+    def test_timeout_reports_attempt_and_budget_without_retry(self):
+        with patch('ai_provider.httpx.post',side_effect=httpx.ReadTimeout('private transport details')) as post:
+            result=research('GEMTEST','revenue cash flow')
+        diag=result['diagnostics']
+        self.assertEqual(post.call_count,1);self.assertEqual(diag['failed_stage'],'analyst')
+        self.assertEqual(diag['request_timeout_seconds'],120);self.assertEqual(diag['error']['timeout_seconds'],120)
+        self.assertEqual(diag['error']['attempts'],1);self.assertEqual(diag['fallback_code'],'timeout')
+        self.assertNotIn('private transport details',str(result))
+
+    def test_check_ai_lists_models_and_uses_one_tiny_probe_without_company_data(self):
+        metadata=[httpx.Response(200,json={'models':[{'name':'models/gemini-3.8-flash','supportedGenerationMethods':['generateContent']}],'nextPageToken':'next-offline-page'}),
+                  httpx.Response(200,json={'models':[{'name':'models/gemini-offline-flash','supportedGenerationMethods':['generateContent']}]})]
+        with patch('ai_provider.httpx.get',side_effect=metadata) as get,patch('ai_provider.httpx.post',return_value=completion({'ok':True})) as post:
+            report=check_ai()
+        self.assertEqual(report['status'],'passed');self.assertTrue(report['model_listing_complete'])
+        self.assertEqual(get.call_count,2);self.assertEqual(post.call_count,1)
+        self.assertEqual(get.call_args.kwargs['params']['pageToken'],'next-offline-page')
+        body=post.call_args.kwargs['json']
+        self.assertEqual(body['generationConfig']['maxOutputTokens'],1024)
+        self.assertLessEqual(post.call_args.kwargs['timeout'].read,30)
+        self.assertNotIn('GEMTEST',str(body));self.assertNotIn('Revenue',str(body));self.assertNotIn('contacts',str(body))
+        self.assertNotIn('offline-gemini-key',str(report))
+        self.assertEqual(report['available_flash_models'],['gemini-3.8-flash','gemini-offline-flash'])
+        self.assertFalse(store.rows('SELECT * FROM cache'))
+
+    def test_check_ai_missing_key_does_not_make_requests(self):
+        with patch.dict(os.environ,{'GEMINI_API_KEY':''}),patch('ai_provider.httpx.get') as get,patch('ai_provider.httpx.post') as post:
+            report=check_ai()
+        self.assertEqual(report['status'],'not_configured');get.assert_not_called();post.assert_not_called()
+
+    def test_check_ai_does_not_probe_or_replace_an_unlisted_model(self):
+        metadata=httpx.Response(200,json={'models':[{'name':'models/gemini-other-flash','supportedGenerationMethods':['generateContent']}]})
+        with patch('ai_provider.httpx.get',return_value=metadata),patch('ai_provider.httpx.post') as post:
+            report=check_ai()
+        self.assertEqual(report['status'],'failed');self.assertEqual(report['probes'][0]['status'],'not_listed')
+        self.assertEqual(report['model'],'gemini-3.8-flash');post.assert_not_called()
+
+    def test_check_ai_overload_does_not_retry_or_claim_a_success(self):
+        metadata=httpx.Response(200,json={'models':[{'name':'models/gemini-3.8-flash','supportedGenerationMethods':['generateContent']}]})
+        with patch('ai_provider.httpx.get',return_value=metadata),patch('ai_provider.httpx.post',return_value=httpx.Response(503,json={})) as post:
+            report=check_ai()
+        self.assertEqual(report['status'],'failed');self.assertEqual(post.call_count,1)
+        self.assertEqual(report['probes'][0]['error']['code'],'temporarily_unavailable')
 
     def test_unknown_sources_and_wrong_source_lines_cannot_pass(self):
         cases=[({'findings':[{'text':'Invented','sources':['S9999999']}]},None),

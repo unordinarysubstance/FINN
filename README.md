@@ -58,13 +58,14 @@ Local state persists in `data/` or `FINN_DATA_DIR`. The free hosted demo has tem
 ```sh
 FINN_DISABLE_MONITOR=1 python3 -m unittest discover -s tests -v
 node --check static/app.js
+python3 manage.py check-ai
 python3 manage.py acquire --symbols HDFCBANK MARUTI
 python3 manage.py refresh --days 30
 ```
 
 For browser checks, install `requirements-dev.txt` and run `python3 browser_qa.py` with Chrome installed. It uses a temporary database copy and disables external acquisition, monitoring and model calls.
 
-The latest suite passed 116 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
+The latest suite passed 123 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
 
 Reports under `data/verification/` are private. [VERIFICATION.md](VERIFICATION.md) summarises the evidence; [DEMO.md](docs/DEMO.md) has the walkthrough. `python3 package_submission.py` builds an allowlisted source archive with public documents and a file-hash manifest, excluding credentials and investor runtime data.
 

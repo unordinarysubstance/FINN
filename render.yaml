@@ -29,6 +29,8 @@ services:
         value: gemini
       - key: FINN_GEMINI_MODEL
         value: gemini-3.8-flash
+      - key: FINN_GEMINI_TIMEOUT_SECONDS
+        value: "120"
 # Add GEMINI_API_KEY privately in Render Environment, using a free-tier AI Studio
 # project without billing. With no key or on quota failure, FINN shows evidence.
 # OpenAI is never called unless FINN_AI_PROVIDER is explicitly set to openai.

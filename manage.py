@@ -15,7 +15,7 @@ import seed
 from diagnostics import failure
 from pypdf import PdfReader
 from research import research
-from ai_provider import configuration
+from ai_provider import configuration,check_ai
 
 QUESTIONS=[
  'What are the main businesses and segments, and what drives demand?',
@@ -119,7 +119,7 @@ def verify(manifest,include_historical,symbols):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['status','prepare','acquire','evaluate','refresh','smoke-ai','verify'])
+    parser.add_argument('command',choices=['status','prepare','acquire','evaluate','refresh','check-ai','smoke-ai','verify'])
     parser.add_argument('--manifest',default=str(store.ROOT/'examples'/'primary_sources.json'))
     parser.add_argument('--include-historical',action='store_true')
     parser.add_argument('--local-dir',help='Import verified manifest PDFs from this inbox without network requests; see each record local_filename in the report.')
@@ -140,6 +140,7 @@ def main():
         result={'companies':[acquire(s,args.force) for s in args.symbols]}
     elif args.command=='evaluate':result=evaluate(args.symbols,[args.question_index] if args.question_index else None)
     elif args.command=='verify':result=verify(args.manifest,args.include_historical,args.symbols)
+    elif args.command=='check-ai':result=check_ai()
     elif args.command=='smoke-ai':
         docs=store.rows("SELECT id FROM documents WHERE ticker='TCS' AND kind='filing' LIMIT 1")
         result=research('TCS','What revenue change and cash conversion does this filing report?',docs[0]['id'] if docs else None)
@@ -157,7 +158,8 @@ def main():
         if not archived.exists():archived.write_bytes(previous)
     path.write_text(json.dumps(result,indent=2))
     print('Report:',path)
-    if args.command=='smoke-ai': print(json.dumps({'mode':result['mode'],'diagnostics':result['diagnostics']},indent=2))
+    if args.command=='check-ai':print(json.dumps(result,indent=2))
+    elif args.command=='smoke-ai': print(json.dumps({'mode':result['mode'],'diagnostics':result['diagnostics']},indent=2))
     elif args.command=='acquire':
         for item in result['companies']:print(item['ticker'],item['status'],str(item['coverage']['annual_reports'])+' annual reports',str(item['coverage']['transcripts'])+' transcripts')
     elif args.command=='prepare':
@@ -179,6 +181,7 @@ def main():
         if result.get('evaluation',{}).get('status')=='skipped':print('Evaluation skipped:',result['evaluation']['reason'])
     else:print('AI configured:',result['ai_configured'],'Model:',result['model']);print('Coverage:',[(c['ticker'],c['annual_reports'],c['transcripts']) for c in result['coverage']])
     if args.command=='smoke-ai' and result['mode']!='ai':return 1
+    if args.command=='check-ai' and result['status']!='passed':return 1
     if args.command=='acquire' and any(item['status'] not in ('ready','existing') for item in result['companies']):return 1
     if args.command=='evaluate' and result['passed_automated']!=result['required']:return 1
     if args.command=='prepare' and any(r['status'] not in ('indexed','already_indexed') for r in result['documents']):return 1

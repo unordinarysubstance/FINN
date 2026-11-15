@@ -41,3 +41,5 @@ Only selected source passages/questions go to the optional model. Gemini request
 ## Update the existing FINN service
 
 Push the reviewed changes, then open the existing service's Environment settings. Apply the Gemini variables in [GEMINI.md](GEMINI.md), save them privately, and choose Manual Deploy → Deploy latest commit. The Blueprint has automatic deployment disabled. Environment settings on an existing service do not update merely because render.yaml changed in Git. Keep the service on Free and preserve its access password.
+
+Gemini research defaults to a 120-second timeout per pass; FINN_GEMINI_TIMEOUT_SECONDS accepts 10-180 seconds. The check-ai CLI diagnostic first lists advertised models and probes a tiny JSON request without company data. A passing probe is provider availability evidence only; smoke-ai still checks full research. These commands need to run in a terminal with outbound access. A timeout or 503 does not establish successful AI acceptance.

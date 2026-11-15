@@ -52,3 +52,9 @@ class PreparationTests(unittest.TestCase):
   model.assert_called_once_with('TEST',manage.QUESTIONS[2])
   self.assertEqual(r['required'],1);self.assertEqual(r['passed_automated'],1)
   self.assertEqual(r['selection']['question_indexes'],[3])
+ def test_check_ai_cli_writes_diagnostic_report_without_research(self):
+  report={'status':'failed','provider':'gemini','probes':[]}
+  with patch('sys.argv',['manage.py','check-ai']),patch('manage.store.init'),patch('manage.seed.seed'),patch('manage.check_ai',return_value=report),patch('manage.research') as research,patch('builtins.print'):
+   status=manage.main()
+  self.assertEqual(status,1);research.assert_not_called()
+  self.assertEqual(json.loads((store.DATA/'verification'/'check-ai.json').read_text()),report)
