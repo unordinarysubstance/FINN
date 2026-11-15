@@ -16,6 +16,10 @@ Added generic new-ticker acquisition before API research: company directory reso
 
 The user confirmed push 9d63c8b, then real automatic HDFCBANK acquisition (one annual report and two transcripts), MARUTI partial acquisition (annual report only), a completed refresh of all eighteen price feeds, and passed Chrome checks at both widths. The RSS endpoint returned a valid recent overnight snapshot without portfolio matches; the date-range API still returned 403. MARUTI transcript links used an HTML viewer and exposed a parser gap. Generic encoded-query/embedded-PDF resolution and issuer-hosted brand-name handling are now fixed and regression-tested; a targeted MARUTI live retry remains. Successful RSS now also supplements configured company-IR pages instead of skipping them. This executor still cannot resolve external DNS or bind a browser server. No new paid model batch or cloud service was silently started.
 
+## Free hosting choice — 15 November
+
+The user confirmed no Render resources exist and requested no payment. The default Blueprint now uses Free compute without a disk and temporary storage at /tmp/finn. The hosted app displays a reset/monitoring notice. Existing local data and credentials are unchanged. The default cloud deployment omits model credentials; AI remains an optional separately billed integration. A fresh-workspace smoke check verifies public-corpus restoration and hosted access; actual Render deployment still needs user execution. See DEPLOYMENT.md for the revised free-runtime checks. Persistent local tests do not establish persistence on the free host.
+
 ## Evidence from real runs
 
 | Check | Observed outcome |
@@ -29,7 +33,7 @@ The user confirmed push 9d63c8b, then real automatic HDFCBANK acquisition (one a
 | Announcements | NSE returned HTTP 403. The official Reliance IR fallback imported ten filings and created five alerts. Result is explicitly partial: one of eighteen followed companies. Publication dates with unknown times retain that precision. |
 | Browser | User-terminal Playwright/Chrome run passed twelve interaction checks at each of 1440×1000 and 390×844; no page errors. Representative screenshots inspected. |
 | Fresh package | 24 public PDFs, generated public-only SQLite/FTS index, manifest hashes verified. Clean extracted app started in about 1.3s, served every PDF, returned primary research evidence and preserved saved state across restart. |
-| Automated suite | Latest suite: 101/101 passed in 41.246 seconds. JavaScript syntax and Python compilation passed. |
+| Automated suite | Latest suite: 102/102 passed in 26.962 seconds. JavaScript syntax and Python compilation passed. |
 | Container/cloud/public repository | Container configuration prepared; Docker build and deployment not executed. No public GitHub repository created. |
 
 Private evidence is in `data/verification/`: `evaluate.json`, `source-review.json`, `refresh.json`, `browser/report.json`, browser screenshots and `package.json`. It is excluded from publication because reports can contain investor context. Public documentation summarises results without exporting that state.

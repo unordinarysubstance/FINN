@@ -1,39 +1,37 @@
-# Local and Render deployment
+# Free Render deployment
 
-The user confirmed the initial private push to https://github.com/unordinarysubstance/FINN at `ac72021`. The challenge requests a public repository; it remains private under the user's explicit instruction pending approval to change visibility. Render is selected, but no service has been created or deployed in this session.
+The user selected zero-payment hosting. The default render.yaml now uses one Free Docker web service, no attached disk, and temporary runtime storage at /tmp/finn. The password gate remains enabled and Render generates its secret. OPENAI_API_KEY is omitted so the default hosted demo makes no paid model calls. The existing local .env and local database are unchanged.
 
-## Local
+## What the free demo preserves
 
-Use Python 3.12+, install requirements.txt, then run:
+The image includes twelve archive filings, twelve primary PDFs and their public search index. A fresh workspace restores this corpus, the eighteen-company portfolio, five archive examples and synthetic contacts automatically. It does not restore private uploads, extra acquired documents, saved events, settings, alerts or model caches from a previous filesystem. The app displays this limitation whenever FINN_EPHEMERAL_DEMO=1.
+
+Render Free sleeps after fifteen idle minutes and may take about a minute to resume. Its local filesystem is discarded on sleep, restart or redeploy. It cannot attach a persistent disk. Monitoring therefore runs only while the process is awake. [Official free-tier limits](https://render.com/docs/free).
+
+Within an awake instance, research, acquisition, settings and alerts use the ordinary SQLite workflow. Persistent storage across those platform resets would require an external database/file-storage design; adding a database URL alone does not migrate this SQLite/FTS application. Do not interpret the free demo as always-on monitoring or durable investor storage.
+
+## Deploy a new free service
+
+No Render resources had been created when the user chose this configuration.
+
+1. From the normal terminal in finn/, run python3 data/verification/push_github.py to upload the reviewed free configuration.
+2. Sign in to your personal [Render dashboard](https://dashboard.render.com/) and authorize GitHub access to unordinarysubstance/FINN through the browser flow.
+3. Choose New → Blueprint, connect FINN, choose main, and use render.yaml at the repository root. Leave any root-directory field blank. Review the proposed service: plan Free, no disk, Docker, Singapore, /healthz readiness, one instance. Create only that free service. [Blueprint instructions](https://render.com/docs/infrastructure-as-code).
+4. Keep OPENAI_API_KEY unset for the zero-model-charge demo. The app uses evidence mode: original source passages, PDFs, contact matching and the reviewed numeric example remain available. If you later add your API key, AI requests use that provider account's credits/billing; Render's free compute does not cover them.
+5. After the service becomes Live, open Environment and retrieve FINN_ACCESS_PASSWORD privately. Visit the actual onrender.com URL and log in as finn. Never put the password or API key in Git, a URL or chat.
+6. Check /healthz returns {"status":"ok"} without login; the main app and APIs should require login. Try Archive → Reliance, an original PDF, Network search, and TCS source research on desktop and phone.
+7. For a free-runtime reset check, save an archive event and restart the service. A genuinely replaced filesystem should restore the bundled corpus and reset that saved state. This is the expected temporary-demo behavior. Do not use the earlier persistent-disk restart criterion.
+
+Do not add a payment method for this requested no-payment setup. Render documents suspension/build restrictions when included limits are exhausted without one. Check usage in its dashboard; no unlimited-usage promise is made. [Free usage handling](https://render.com/docs/free).
+
+If an existing paid service or disk is ever involved, handle it separately before following these fresh-service instructions. Removing resource definitions from a Blueprint does not automatically delete existing resources. [Blueprint resource lifecycle](https://render.com/docs/infrastructure-as-code).
+
+## Local development
 
 ```sh
 FINN_REVIEW_MODEL=gpt-6.1-sol python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Keep credentials in your existing local .env or environment. The password gate is optional locally. To enable it, set FINN_REQUIRE_ACCESS=1, FINN_ACCESS_USER=finn and a FINN_ACCESS_PASSWORD of at least sixteen characters in a private environment. Keep credentials out of command-line arguments, URLs, Git and chat.
+Local runtime data remains in data/ or FINN_DATA_DIR until the workspace owner removes it. The ephemeral-demo flag is enabled only in the free-hosting configuration. Authentication is optional locally and required in the Blueprint. Shared-demo authentication does not isolate multiple investors.
 
-## Render configuration
-
-The root render.yaml defines one Docker web service in Singapore, compute plan `0.5c-512mb`, a 1 GB disk at /data, one instance and manual service deployments. Applying it creates **paid compute and storage**: review the current Render estimate first. Free Render web services cannot attach a persistent disk. This implementation preserves SQLite, settings, alerts and imported PDFs on that disk. [Render storage documentation](https://render.com/docs/disks).
-
-The Docker process listens on 8000 and the Blueprint sets PORT to match. FORWARDED_ALLOW_IPS=* trusts Render's ingress so HTTPS origins work with the write guard; use it only behind a trusted reverse proxy. One worker/instance preserves SQLite and scheduler ownership. Large PDF imports may need more memory; the smallest plan has not been load-tested.
-
-Render generates the shared access password as a secret. No actual password is committed. The minimal /healthz readiness route is public. UI, PDFs, /docs and workspace APIs require authentication. /api/health is protected because it contains source state. Required hosted access fails startup when the password is missing or too short. All authenticated users share one demo workspace; this is not per-investor ownership.
-
-## Connect and launch
-
-1. Push these reviewed changes to FINN.
-2. Sign in to your personal [Render dashboard](https://dashboard.render.com/). Open Account Settings → Account Security → Git Deployment Credentials, add GitHub and authorize FINN. Complete browser authorization without sharing tokens. [Official connection instructions](https://render.com/docs/git-provider).
-3. Choose New → Blueprint, select FINN/main and root render.yaml. Review the resource list and recurring cost before applying. Platform schema validation and service creation have not run from this restricted executor.
-4. The first deploy can use evidence mode without model credentials. To enable AI, add OPENAI_API_KEY directly in the service's secret Environment settings and redeploy. The configured analyst/reviewer pair incurs model usage. No local .env is copied.
-5. Retrieve FINN_ACCESS_PASSWORD privately in Render's Environment settings. Open the actual service URL and sign in as finn. Keep the password out of the URL/chat and share evaluator access only through the approved submission channel.
-6. Check anonymous /healthz returns 200, anonymous UI/PDF/API requests return 401, and authenticated navigation, research, acquisition, uploads and settings work. Inspect live price/announcement source outcomes.
-7. Save an event, restart/redeploy and confirm it persists on /data. Test from a phone, then record the real URL and checks in VERIFICATION.md and the covering note.
-
-The public PDFs and portable index are in the image. Startup installs the index only into a new workspace and adds synthetic contacts and dated archive events. Existing investor state is never replaced. New downloads and mutable state live on /data; new-company acquisition and feeds require outbound HTTPS.
-
-## Privacy and retention
-
-Only selected source passages and questions go to the model with store=False. Contacts are not sent. Workspace data persists until removed by its owner. Back up SQLite consistently with its backup facility and retain original PDFs with it; copying an actively written database file alone is not reliable.
-
-A real multi-user service still needs per-investor ownership checks, individual authentication, consented imports, deletion/export and retention rules, encrypted storage/backups and access auditing. The shared-demo password gate does not implement those controls.
+Only selected source passages/questions go to the optional model with store=False. Contact profiles are not sent. Real multi-user deployment still needs per-investor ownership, consented imports, deletion/export, retention controls and access auditing.

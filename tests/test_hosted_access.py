@@ -45,3 +45,10 @@ class HostedAccessTests(unittest.TestCase):
   result=client.put('/api/settings',headers=headers,auth=('finn','offline-test-password-only'),json=store.settings())
   self.assertEqual(result.status_code,200)
   self.assertEqual(client.put('/api/settings',headers={**headers,'Origin':'https://foreign.example'},auth=('finn','offline-test-password-only'),json=store.settings()).status_code,403)
+ def test_free_hosting_state_reset_notice_is_explicit_and_environment_scoped(self):
+  with patch.dict(os.environ,{'FINN_EPHEMERAL_DEMO':'1'}):
+   notice=self.client.get('/api/overview',auth=('finn','offline-test-password-only')).json()['hosting_notice']
+   self.assertIn('reset',notice);self.assertIn('Bundled public documents restore automatically',notice)
+   self.assertIn('Monitoring pauses',notice)
+  with patch.dict(os.environ,{'FINN_EPHEMERAL_DEMO':'0'}):
+   self.assertIsNone(self.client.get('/api/overview',auth=('finn','offline-test-password-only')).json()['hosting_notice'])

@@ -1,24 +1,22 @@
-# Creating this Blueprint provisions paid compute and disk. Review the Render estimate first.
+# Free demonstration hosting. Runtime data resets when Render sleeps/restarts/redeploys.
 services:
   - type: web
     name: finn
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     region: singapore
     branch: main
     dockerfilePath: ./Dockerfile
     autoDeployTrigger: "off"
     healthCheckPath: /healthz
     numInstances: 1
-    disk:
-      name: finn-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: PORT
         value: "8000"
       - key: FINN_DATA_DIR
-        value: /data
+        value: /tmp/finn
+      - key: FINN_EPHEMERAL_DEMO
+        value: "1"
       - key: FORWARDED_ALLOW_IPS
         value: "*"
       - key: FINN_REQUIRE_ACCESS
@@ -33,5 +31,5 @@ services:
         value: gpt-6.1-sol
       - key: FINN_REVIEW_EFFORT
         value: low
-# Add OPENAI_API_KEY in Render's secret environment after creation to enable AI.
-# Without it, source acquisition and evidence search work without model calls.
+# Leave OPENAI_API_KEY unset for a demo without model API charges.
+# Adding an API key enables AI and uses that provider account's credits/billing.

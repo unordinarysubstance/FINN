@@ -77,6 +77,7 @@ def overview():
         price=rows('SELECT data FROM prices WHERE ticker=?',(company['ticker'],))
         company['price']=json.loads(price[0]['data']) if price else None
     return {'companies':companies,'settings':store.settings(),'contacts':seed.contacts(),'ai_enabled':bool(os.getenv('OPENAI_API_KEY')),'archive_count':rows('SELECT count(*) n FROM events WHERE archive=1')[0]['n'],'source_status':monitoring.source_health(),
+      'hosting_notice':('Free hosting demo: saved events, settings, uploads, newly acquired documents and alerts can reset when the service sleeps, restarts or redeploys. Bundled public documents restore automatically. Monitoring pauses while the service sleeps.' if os.getenv('FINN_EPHEMERAL_DEMO')=='1' else None),
       'document_limits_mb':store.PDF_LIMITS_MB,'unread_alerts':rows('SELECT count(*) n FROM alerts WHERE read=0')[0]['n'],
       'monitoring_notice':'Monitoring runs while this local backend is running. Announcements: every 15 minutes; completed-session prices: after 16:00 IST.'}
 

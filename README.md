@@ -6,6 +6,10 @@ Research accepts any NSE company ticker and automatically finds, checks and inde
 
 The bundled corpus includes four annual reports, eight transcripts and twelve archived filings. All eighteen price feeds refreshed successfully; the official Reliance announcement fallback imported ten filings and created five alerts. Research with `gpt-4o-mini` plus the `gpt-6.1-sol` reviewer passed 12/12 structural checks; source inspection checked 41 retained findings and matched all 67 supporting spans to original PDFs. Chrome checks passed at 1440px and 390px. **Research answers still have coverage limits, live announcements cover only Reliance, and hosting/publication remain unfinished.** See [VERIFICATION.md](VERIFICATION.md).
 
+## Free hosted demo
+
+The default Render configuration uses **Free compute and no disk**. Private runtime changes are temporary; a visible notice explains resets and paused monitoring. The bundled public corpus restores on startup. Leave OPENAI_API_KEY unset for an evidence-mode demo without model API charges. [Free deployment steps](docs/DEPLOYMENT.md) explain the platform limits and exact setup. Local development data is unaffected.
+
 ## Run
 
 From this directory with Python 3.12 or newer:

@@ -25,7 +25,7 @@ Checked against all five pages of `1. ENAM_Founding AI Engineer Build Challenge_
 | Pipelines and source linking | README architecture diagram, module descriptions, provenance and event/contact integration. |
 | Privacy, retention and real consent/access control | README/DEPLOYMENT explain storage, model inputs, persistence, consent/deletion and ownership gaps. New shared-demo password gate protects UI/documents/APIs; it is not multi-user isolation. |
 | Models, agents, cost and efficiency | Two bounded model passes, configurable routing, evidence/model-aware cache, measured usage and quality limits in EVALUATION.md. |
-| Cloud choices | Render Docker Blueprint, persistent disk, generated access secret, readiness route and single-instance launch checklist. No paid resources created; platform validation, cost review and deployment remain. |
+| Cloud choices | User-selected Free Render Blueprint: no disk, temporary runtime, generated access secret and readiness route. Reset behavior is visible. No cloud resources created; platform launch remains. |
 | Phone-accessible delivered prototype | Local responsive app and portable corpus work. Actual hosted URL still required. |
 | Public GitHub repository | Initial private push to `unordinarysubstance/FINN` confirmed at `ac72021`. Initial implementation update 9d63c8b was pushed; the subsequent viewer/supplement fix requires push. Visibility remains private under the user's explicit instruction pending approval to change it. |
 | Actual AI build history | Real conversation exports/share links still need to be supplied; no synthetic build log is substituted. |
@@ -44,4 +44,4 @@ python3 manage.py refresh --days 30
 python3 browser_qa.py
 ```
 
-Inspect individual failures in `data/verification/acquire.json` and `refresh.json`; partial status remains a coverage gap. Try a non-demo company in Research and open its acquired source pages. After Render deployment, test authentication, phone navigation, source access and persistence across restart. Fill actual delivery links before declaring the submission complete.
+Inspect individual failures in `data/verification/acquire.json` and `refresh.json`; partial status remains a coverage gap. Try a non-demo company in Research and open its acquired source pages. After Render deployment, test authentication, phone navigation, source access and the documented free-runtime reset behavior. Fill actual delivery links before declaring the submission complete.
