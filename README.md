@@ -33,7 +33,7 @@ An API key is optional. Without one, Research returns source passages and PDF li
 
 The default model is `gemini-3.6-flash`. Each uncached answer has two model passes, with up to three HTTP attempts per pass for temporary server failures; requests are spaced 15 seconds apart for the observed free-tier limit. Failed quota or validation checks return source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
 
-OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI. Gemini 3.6 has now passed a live filing smoke check, with both findings checked against their original PDF pages; its first broader run passed 2/12 structural checks, with five rate-limit and five analyst validation failures. Pipeline 8 adds pacing, strict analyst JSON and safe output diagnostics; its live rerun is pending.
+OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI. Gemini 3.6 has now passed a live filing smoke check, with both findings checked against their original PDF pages; its first broader run passed 2/12 structural checks. With pipeline 8 pacing and strict analyst JSON, the next run passed five answers before the project exhausted its 20-request daily allowance. The remaining seven need a run after quota reset; successful answers are cached.
 
 ## How it works
 
@@ -65,7 +65,7 @@ python3 manage.py refresh --days 30
 
 For browser checks, install `requirements-dev.txt` and run `python3 browser_qa.py` with Chrome installed. It uses a temporary database copy and disables external acquisition, monitoring and model calls.
 
-The latest suite passed 131 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
+The latest suite passed 135 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
 
 Reports under `data/verification/` are private. [VERIFICATION.md](VERIFICATION.md) summarises the evidence; [DEMO.md](docs/DEMO.md) has the walkthrough. `python3 package_submission.py` builds an allowlisted source archive with public documents and a file-hash manifest, excluding credentials and investor runtime data.
 

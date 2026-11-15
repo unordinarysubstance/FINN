@@ -72,19 +72,23 @@ def prepare(manifest,include_historical=False,local_dir=None):
 def evaluate(symbols,question_indexes=None,progress=None):
     indexes=list(question_indexes) if question_indexes is not None else list(range(1,len(QUESTIONS)+1))
     if not indexes or any(type(i) is not int or not 1<=i<=len(QUESTIONS) for i in indexes):raise ValueError('Unsupported evaluation question index.')
-    answers=[]
-    for symbol in symbols:
-        for question_index in indexes:
-            question=QUESTIONS[question_index-1]
-            result=research(symbol,question)
-            result['question_index']=question_index
-            ids={c['id'] for c in result['citations']}
-            valid=all(f['sources'] and all(s in ids for s in f['sources']) for f in result['findings'])
-            result['automated_acceptance']=bool(result['mode']=='ai' and result['findings'] and valid and result['diagnostics'].get('reviewer_completed'))
-            result['manual_review']='pending; inspect each finding against its cited passage and original page'
-            answers.append(result)
-            if progress:progress(symbol,question_index,result,len(answers),len(symbols)*len(indexes))
-    return {'checked_at':store.now(),'selection':{'symbols':symbols,'question_indexes':indexes},'answers':answers,'passed_automated':sum(a['automated_acceptance'] for a in answers),'required':len(answers),'manual_review_complete':False}
+    answers=[];selection=[(symbol,index) for symbol in symbols for index in indexes]
+    stopped_reason=None;not_attempted=[]
+    for position,(symbol,question_index) in enumerate(selection):
+        question=QUESTIONS[question_index-1]
+        result=research(symbol,question)
+        result['question_index']=question_index
+        ids={c['id'] for c in result['citations']}
+        valid=all(f['sources'] and all(s in ids for s in f['sources']) for f in result['findings'])
+        result['automated_acceptance']=bool(result['mode']=='ai' and result['findings'] and valid and result['diagnostics'].get('reviewer_completed'))
+        result['manual_review']='pending; inspect each finding against its cited passage and original page'
+        answers.append(result)
+        if progress:progress(symbol,question_index,result,len(answers),len(selection))
+        if result['diagnostics'].get('fallback_code')=='daily_quota':
+            stopped_reason='daily_quota'
+            not_attempted=[{'ticker':s,'question_index':i} for s,i in selection[position+1:]]
+            break
+    return {'checked_at':store.now(),'selection':{'symbols':symbols,'question_indexes':indexes},'answers':answers,'passed_automated':sum(a['automated_acceptance'] for a in answers),'required':len(selection),'manual_review_complete':False,'stopped_reason':stopped_reason,'not_attempted':not_attempted}
 
 def verify(manifest,include_historical,symbols):
     """Run the live acceptance sequence, stopping early on a blocked runtime."""
@@ -172,7 +176,9 @@ def main():
         for item in result['companies']:print(item['ticker'],item['status'],str(item['coverage']['annual_reports'])+' annual reports',str(item['coverage']['transcripts'])+' transcripts')
     elif args.command=='prepare':
         for r in result['documents']:print(r['ticker'],r['period'] or 'period unknown',r['status'],r.get('error',{}).get('message',''))
-    elif args.command=='evaluate':print(f"AI answers passing structural checks: {result['passed_automated']}/{result['required']}; manual review pending.")
+    elif args.command=='evaluate':
+        print(f"AI answers passing structural checks: {result['passed_automated']}/{result['required']}; manual review pending.")
+        if result.get('stopped_reason')=='daily_quota':print(f"Stopped: daily API quota exhausted; {len(result['not_attempted'])} questions not attempted. Run evaluate after the daily reset to reuse cached answers and continue.")
     elif args.command=='refresh':
         for key,value in result.items():print(key,value.get('status','unknown'))
     elif args.command=='verify':

@@ -8,6 +8,7 @@ import math
 import threading
 from types import SimpleNamespace
 import httpx
+from diagnostics import quota_scope
 
 class ModelOutputError(ValueError):
     """A fixed reason and metadata, never generated text or request contents."""
@@ -41,24 +42,19 @@ def minute_retry_delay(body):
     if not isinstance(body,dict) or not isinstance(body.get('error'),dict):return None
     error=body['error'];details=error.get('details',[])
     if error.get('code') in ('quota_exceeded','insufficient_quota','billing_hard_limit_reached','payment_required'):return None
+    if quota_scope(body)!='minute':return None
     if not isinstance(details,list):details=[]
-    scopes=[];delays=[]
+    delays=[]
     for detail in details:
         if not isinstance(detail,dict):continue
-        if str(detail.get('@type','')).endswith('QuotaFailure'):
-            for violation in detail.get('violations',[]):
-                if isinstance(violation,dict):scopes.append(str(violation.get('quotaId','')).lower())
         if str(detail.get('@type','')).endswith('RetryInfo'):
             value=detail.get('retryDelay','')
             if isinstance(value,str) and re.fullmatch(r'\d+(?:\.\d+)?s',value):delays.append(float(value[:-1]))
     message=str(error.get('message','')).lower()
-    # A daily exhaustion must never be retried, even if RetryInfo is also sent.
-    if any('day' in scope or 'daily' in scope for scope in scopes) or re.search(r'per[ _-]*day|daily',message):return None
-    minute=any('minute' in scope for scope in scopes) or bool(re.search(r'per[ _-]*minute',message))
     if not delays:
         match=re.search(r'retry in (\d+(?:\.\d+)?)s',message)
         if match:delays.append(float(match.group(1)))
-    if minute and delays:
+    if delays:
         value=max(delays)
         if not math.isfinite(value) or value>59:return None
         delay=math.ceil(value)+1

@@ -64,3 +64,11 @@ class PreparationTests(unittest.TestCase):
   answer={'mode':'ai','findings':[{'sources':['S1']}],'citations':[{'id':'S1'}],'diagnostics':{'reviewer_completed':True}}
   with patch('manage.research',return_value=answer):result=manage.evaluate(['TEST'],[2],progress=progress)
   progress.assert_called_once_with('TEST',2,result['answers'][0],1,1)
+ def test_evaluation_stops_at_daily_quota_and_records_unattempted_questions(self):
+  success={'mode':'ai','findings':[{'sources':['S1']}],'citations':[{'id':'S1'}],'diagnostics':{'reviewer_completed':True,'cache_hit':True}}
+  daily={'mode':'evidence','findings':[],'citations':[],'diagnostics':{'fallback_code':'daily_quota'}}
+  with patch('manage.research',side_effect=[success,daily]) as model:result=manage.evaluate(['TEST'],[1,2,3])
+  self.assertEqual(model.call_count,2);self.assertEqual(result['passed_automated'],1)
+  self.assertEqual(result['required'],3);self.assertEqual(result['stopped_reason'],'daily_quota')
+  self.assertEqual(result['not_attempted'],[{'ticker':'TEST','question_index':3}])
+  self.assertEqual(len(result['answers']),2);self.assertTrue(result['answers'][0]['diagnostics']['cache_hit'])

@@ -281,6 +281,15 @@ class GeminiTests(unittest.TestCase):
         self.assertIsNone(minute_retry_delay(body('UnknownQuota')))
         self.assertIsNone(minute_retry_delay({'error':{'message':'daily and per minute limit exceeded, retry in 1s'}}))
 
+    def test_daily_quota_returns_evidence_without_retry_or_cache_overwrite(self):
+        error={'error':{'message':'limit: 20, model: gemini-3.6-flash, requests per day limit exceeded. Please retry in 11h52m5s.',
+                'details':[{'@type':'type.googleapis.com/google.rpc.RetryInfo','retryDelay':'42725s'}]}}
+        with patch('ai_provider.httpx.post',return_value=httpx.Response(429,json=error)) as post,patch('ai_provider.time.sleep') as sleep:
+            result=research('GEMTEST','revenue cash flow')
+        self.assertEqual(result['mode'],'evidence');self.assertEqual(result['diagnostics']['fallback_code'],'daily_quota')
+        self.assertEqual(result['diagnostics']['error']['quota_scope'],'daily')
+        self.assertEqual(post.call_count,1);sleep.assert_not_called();self.assertFalse(store.rows('SELECT * FROM cache'))
+
     def test_output_diagnostics_identify_blocked_truncated_and_nonobject_without_text(self):
         cases=[(completion({},'MAX_TOKENS'),{'validation_reason':'incomplete_output','finish_reason':'MAX_TOKENS'}),
                (httpx.Response(200,json={'promptFeedback':{'blockReason':'SAFETY'}}),{'validation_reason':'missing_candidates','block_reason':'SAFETY'}),

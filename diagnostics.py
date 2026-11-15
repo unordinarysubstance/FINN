@@ -4,6 +4,23 @@ import socket
 import os
 import re
 
+def quota_scope(body):
+    if not isinstance(body,dict):return 'unknown'
+    error=body.get('error',body)
+    if not isinstance(error,dict):return 'unknown'
+    scopes=[]
+    details=error.get('details',[])
+    for detail in details if isinstance(details,list) else []:
+        if not isinstance(detail,dict):continue
+        if str(detail.get('@type','')).endswith('QuotaFailure'):
+            violations=detail.get('violations',[])
+            for violation in violations if isinstance(violations,list) else []:
+                if isinstance(violation,dict):scopes.append(str(violation.get('quotaId','')).lower())
+    message=str(error.get('message','')).lower()
+    if any('perday' in scope or 'daily' in scope for scope in scopes) or re.search(r'per[ _-]*day|daily',message):return 'daily'
+    if any('minute' in scope for scope in scopes) or re.search(r'per[ _-]*minute',message):return 'minute'
+    return 'unknown'
+
 
 def _classification(exc):
     name=type(exc).__name__
@@ -20,6 +37,8 @@ def _classification(exc):
     if status in (403,404) or name in ('PermissionDeniedError','NotFoundError'):
         return {'code':'access','message':'The source or configured model denied access or was not found.'}
     if status==429:
+        if quota_scope(body)=='daily':
+            return {'code':'daily_quota','message':'The model project has exhausted its daily API quota. Wait for the daily reset; cached answers and source evidence remain available.'}
         return {'code':'rate_limit','message':'The provider rate limit was reached. Retry later.'}
     if status==400:
         return {'code':'invalid_request','message':'The provider rejected the request format, parameters, or model configuration.'}
@@ -66,6 +85,7 @@ def failure(exc):
         value=getattr(exc,key,None)
         if isinstance(value,str) and re.fullmatch(r'[A-Z_]{1,64}',value):result[key]=safe_provider_message(value)
     body=getattr(exc,'body',None)
+    if status==429:result['quota_scope']=quota_scope(body)
     if isinstance(body,dict):
         error=body.get('error',body)
         if isinstance(error,dict):
