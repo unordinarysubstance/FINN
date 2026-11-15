@@ -1,10 +1,10 @@
-# Verification — updated 13 November 2026
+# Verification — updated 15 November 2026
 
 ## Current result
 
-The integrated local prototype works with public source documents, optional two-pass AI, source-aware monitoring, persistent alerts and synthetic contacts. Chrome checks passed at desktop and phone widths. The submission bundle starts from a clean extraction with a ready-to-search public corpus. **Public GitHub publication, hosting/access setup and actual build-history links are still required for submission.**
+The integrated local prototype works with public source documents, optional two-pass AI, source-aware monitoring, persistent alerts and synthetic contacts. Chrome checks passed at desktop and phone widths. The submission bundle starts from a clean extraction with a ready-to-search public corpus. The owner confirmed hosted readiness, login, original PDF access, research citations and Network search at https://finn-rzzb.onrender.com/. Public visibility is now authorized and awaits CLI confirmation; actual build-history links and the final covering email remain.
 
-Research is usable with disclosed coverage limits. A structural pass is not a factual-accuracy score. Announcement coverage is partial, and six current transcript candidates remain unverified. The initial private GitHub push was confirmed at ac72021; public visibility, deployment and email sending have not occurred.
+Research is usable with disclosed coverage limits. A structural pass is not a factual-accuracy score. Announcement coverage is partial, and six current transcript candidates remain unverified. The free deployment commit 3c5b063 was pushed and its hosted workflows were confirmed by the owner. The assistant could not independently fetch the hosted endpoints. No submission email has been sent.
 
 ## Requirement audit and new implementation
 
@@ -14,11 +14,11 @@ The automatic PDF validator was replayed against all twelve real bundled primary
 
 Added generic new-ticker acquisition before API research: company directory resolution/fallbacks, original issuer/exchange PDFs only, identity/type/period inspection, indexing, progress, cached attempts and explicit retry. Tests acquire a company outside all seeds and obtain company-scoped evidence without following it. Added official NSE RSS announcement fallback across followed companies, bounded-history coverage labels and deduplication across API/RSS transports. Added shared-demo HTTP Basic access, a minimal readiness route, proxy-origin tests and a Render Blueprint with persistent storage and a generated secret.
 
-The user confirmed push 9d63c8b, then real automatic HDFCBANK acquisition (one annual report and two transcripts), MARUTI partial acquisition (annual report only), a completed refresh of all eighteen price feeds, and passed Chrome checks at both widths. The RSS endpoint returned a valid recent overnight snapshot without portfolio matches; the date-range API still returned 403. MARUTI transcript links used an HTML viewer and exposed a parser gap. Generic encoded-query/embedded-PDF resolution and issuer-hosted brand-name handling are now fixed and regression-tested; a targeted MARUTI live retry remains. Successful RSS now also supplements configured company-IR pages instead of skipping them. This executor still cannot resolve external DNS or bind a browser server. No new paid model batch or cloud service was silently started.
+The user confirmed push 9d63c8b, then real automatic HDFCBANK acquisition (one annual report and two transcripts), MARUTI partial acquisition (annual report only), a completed refresh of all eighteen price feeds, and passed Chrome checks at both widths. The RSS endpoint returned a valid recent overnight snapshot without portfolio matches; the date-range API still returned 403. MARUTI transcript links used an HTML viewer and exposed a parser gap. Generic encoded-query/embedded-PDF resolution and issuer-hosted brand-name handling are now fixed and regression-tested; the owner subsequently confirmed MARUTI ready with its FY2026 annual report and Q1/Q2 FY2027 transcripts, without acquisition failures. Successful RSS now also supplements configured company-IR pages instead of skipping them. This executor still cannot resolve external DNS or bind a browser server. No new paid model batch or cloud service was silently started.
 
 ## Free hosting choice — 15 November
 
-The user confirmed no Render resources exist and requested no payment. The default Blueprint now uses Free compute without a disk and temporary storage at /tmp/finn. The hosted app displays a reset/monitoring notice. Existing local data and credentials are unchanged. The default cloud deployment omits model credentials; AI remains an optional separately billed integration. A fresh-workspace smoke check verifies public-corpus restoration and hosted access; actual Render deployment still needs user execution. See DEPLOYMENT.md for the revised free-runtime checks. Persistent local tests do not establish persistence on the free host.
+The user confirmed no Render resources exist and requested no payment. The default Blueprint now uses Free compute without a disk and temporary storage at /tmp/finn. The hosted app displays a reset/monitoring notice. Existing local data and credentials are unchanged. The default cloud deployment omits model credentials; AI remains an optional separately billed integration. A fresh-workspace smoke check verifies public-corpus restoration and hosted access; the owner has deployed it and confirmed the main hosted workflows. The Render-specific filesystem reset itself has not been independently tested remotely. See DEPLOYMENT.md for the revised free-runtime checks. Persistent local tests do not establish persistence on the free host.
 
 ## Evidence from real runs
 
@@ -34,7 +34,7 @@ The user confirmed no Render resources exist and requested no payment. The defau
 | Browser | User-terminal Playwright/Chrome run passed twelve interaction checks at each of 1440×1000 and 390×844; no page errors. Representative screenshots inspected. |
 | Fresh package | 24 public PDFs, generated public-only SQLite/FTS index, manifest hashes verified. Clean extracted app started in about 1.3s, served every PDF, returned primary research evidence and preserved saved state across restart. |
 | Automated suite | Latest suite: 102/102 passed in 26.962 seconds. JavaScript syntax and Python compilation passed. |
-| Container/cloud/public repository | Container configuration prepared; Docker build and deployment not executed. No public GitHub repository created. |
+| Container/cloud/public repository | Owner reports the Render deployment working. Shared-login and read/research workflows confirmed; assistant network verification unavailable. Repository publication authorized, final visibility check pending. |
 
 Private evidence is in `data/verification/`: `evaluate.json`, `source-review.json`, `refresh.json`, `browser/report.json`, browser screenshots and `package.json`. It is excluded from publication because reports can contain investor context. Public documentation summarises results without exporting that state.
 
@@ -69,7 +69,7 @@ The initial Asian Paints annual-report download exceeded the 25 MB generic PDF c
 ## Remaining submission work
 
 1. Resolve or explicitly disclose the latest-transcript gaps and limited live announcement coverage.
-2. Choose a Python-compatible host with persistent storage and an access gate for this single-investor app; deploy and verify the real public URL. Container execution has not yet been tested.
-3. Push the new reviewed changes to the existing private unordinarysubstance/FINN repository. The brief asks for public visibility; keep the user-requested private setting until they approve changing it.
+2. Hosted core workflows are confirmed by the owner. Keep the free-runtime limitations disclosed; independent remote reset testing is not claimed.
+3. Push the final documentation changes and apply the now-authorized public visibility change to unordinarysubstance/FINN; verify its public status afterward.
 4. Add actual coding-agent conversation exports/share links; no build history has been fabricated.
 5. Fill the concrete links/name in docs/SUBMISSION_EMAIL.md, review the final note and submit by 15 November 2026. Sending requires explicit user instruction.

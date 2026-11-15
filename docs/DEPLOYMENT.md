@@ -1,5 +1,7 @@
 # Free Render deployment
 
+Hosted URL: https://finn-rzzb.onrender.com/. The owner confirmed readiness, login, archive PDF access, research citations and Network search on 15 November. This is owner verification; independent HTTP fetches from the assistant environment were unavailable.
+
 The user selected zero-payment hosting. The default render.yaml now uses one Free Docker web service, no attached disk, and temporary runtime storage at /tmp/finn. The password gate remains enabled and Render generates its secret. OPENAI_API_KEY is omitted so the default hosted demo makes no paid model calls. The existing local .env and local database are unchanged.
 
 ## What the free demo preserves
@@ -14,7 +16,7 @@ Within an awake instance, research, acquisition, settings and alerts use the ord
 
 No Render resources had been created when the user chose this configuration.
 
-1. From the normal terminal in finn/, run python3 data/verification/push_github.py to upload the reviewed free configuration.
+1. Ensure the reviewed free configuration is committed and pushed to the repository branch you will deploy. The current FINN demo uses main.
 2. Sign in to your personal [Render dashboard](https://dashboard.render.com/) and authorize GitHub access to unordinarysubstance/FINN through the browser flow.
 3. Choose New → Blueprint, connect FINN, choose main, and use render.yaml at the repository root. Leave any root-directory field blank. Review the proposed service: plan Free, no disk, Docker, Singapore, /healthz readiness, one instance. Create only that free service. [Blueprint instructions](https://render.com/docs/infrastructure-as-code).
 4. Keep OPENAI_API_KEY unset for the zero-model-charge demo. The app uses evidence mode: original source passages, PDFs, contact matching and the reviewed numeric example remain available. If you later add your API key, AI requests use that provider account's credits/billing; Render's free compute does not cover them.

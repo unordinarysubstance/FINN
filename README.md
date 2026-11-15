@@ -1,18 +1,24 @@
 # FINN
 
-A mobile-first investment desk: **portfolio event → source evidence → relevant contact**. FastAPI, SQLite/FTS5 and plain JavaScript; real archived filings and clearly labelled synthetic contacts.
+FINN is an investment research app built for the ENAM Founding AI Engineer challenge. It brings together portfolio announcements, company documents and the people in an investor’s network who might help explain what is happening.
 
-Research accepts any NSE company ticker and automatically finds, checks and indexes available issuer/exchange annual reports and earnings-call transcripts before answering. It is independent of the bundled demo set. Source outages, ambiguous PDFs and unavailable transcripts remain visible. Automatic HDFC Bank acquisition and desktop/phone browser checks passed in the user terminal. Maruti annual acquisition passed; its viewer-format transcript fix requires a targeted live retry. See the [challenge requirement audit](docs/CHALLENGE_AUDIT.md).
+[Open the demo](https://finn-rzzb.onrender.com/) · [Requirement audit](docs/CHALLENGE_AUDIT.md)
 
-The bundled corpus includes four annual reports, eight transcripts and twelve archived filings. All eighteen price feeds refreshed successfully; the official Reliance announcement fallback imported ten filings and created five alerts. Research with `gpt-4o-mini` plus the `gpt-6.1-sol` reviewer passed 12/12 structural checks; source inspection checked 41 retained findings and matched all 67 supporting spans to original PDFs. Chrome checks passed at 1440px and 390px. **Research answers still have coverage limits, live announcements cover only Reliance, and hosting/publication remain unfinished.** See [VERIFICATION.md](VERIFICATION.md).
+The demo uses a shared login; access details are shared separately with evaluators. It runs on Render Free, so saved events, settings and extra downloads can reset when the service sleeps or restarts. The bundled company documents are restored on startup. A notice in the app explains this.
 
-## Free hosted demo
+## A quick way to try it
 
-The default Render configuration uses **Free compute and no disk**. Private runtime changes are temporary; a visible notice explains resets and paused monitoring. The bundled public corpus restores on startup. Leave OPENAI_API_KEY unset for an evidence-mode demo without model API charges. [Free deployment steps](docs/DEPLOYMENT.md) explain the platform limits and exact setup. Local development data is unaffected.
+Start in **Briefing**, switch to **Archive**, and open Reliance’s “Profit growth deserves a closer look.” The results table links back to the original filing. It also points out the investment-sale disclosure and suggests a relevant contact to speak with.
 
-## Run
+In **Research**, enter an NSE ticker and ask a question. FINN looks for an annual report and two earnings-call transcripts, checks the PDFs, indexes their pages and uses that evidence to answer. HDFC Bank and Maruti Suzuki both passed this acquisition flow outside the original four-company research demo. Some sites block downloads or publish formats the parser cannot read; those gaps are shown in the result. You can also import a PDF yourself.
 
-From this directory with Python 3.12 or newer:
+**Network** searches the mock contacts by company, sector or expertise. Try `IT Services` to see the recorded introduction path from Rohan to Kavya. All ten seeded contacts are synthetic. Shared employment alone does not create a relationship.
+
+**Portfolio** contains eighteen companies across several sectors. Price and volume thresholds, watched announcement categories and saved/read states are configurable. Alerts are kept in the app; no messages are sent to contacts.
+
+## Run locally
+
+Use Python 3.12 or newer. From the repository root:
 
 ```sh
 python3 -m venv .venv
@@ -21,158 +27,51 @@ pip install -r requirements.txt
 python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Open **http://127.0.0.1:8000**; API documentation is at `/docs`. The prepared submission archive includes 24 public PDFs and a portable search index: twelve archived filings under `demo_documents/`, plus four annual reports and eight transcripts under `demo_primary/`. A fresh workspace installs the public index without overwriting an existing database; clean-extraction startup and PDF access passed. The source workspace can also extract archived filings from `../CS787-main/company_assets`. Original CS787 files remain unchanged.
+Open http://127.0.0.1:8000. The checkout includes 24 public PDFs and their search index, so the archive and document-search demo work without downloading them again. API documentation is at `/docs`.
 
-No API key is needed for archive exploration, PDF retrieval, numerical comparisons, contact matching, imports or alerts. For AI analysis, copy `.env.example` to `.env` **only if you do not already have a configured `.env`**, set `OPENAI_API_KEY`, and restart. Exported environment variables take precedence. Never commit the key. The default `FINN_MODEL` is `gpt-4o-mini`; it is configurable, not a claim about the latest or best model.
+An API key is optional. Without one, Research returns relevant source passages and PDF links. To enable generated answers, use `.env.example` as a reference for your local `.env` and set `OPENAI_API_KEY`. Keep an existing `.env` intact and leave it out of Git.
 
-The source-reviewed evaluation used a separate reviewer. To run that same configuration:
+The evaluated model setup uses `gpt-4o-mini` to draft findings and `gpt-6.1-sol` to review them. Select that reviewer when starting the server:
 
 ```sh
 FINN_REVIEW_MODEL=gpt-6.1-sol python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-You can instead set `FINN_REVIEW_MODEL=gpt-6.1-sol` in your existing `.env`. This changes reviewer usage/cost; it has not been silently applied to your credentials file. With no separate reviewer configured, both passes use `FINN_MODEL`; earlier mini-only results failed source review despite structural passes.
+Without that setting, both passes use `FINN_MODEL`, which defaults to `gpt-4o-mini`. Model requests use your API credits; free Render hosting does not cover them.
 
-## Try the working archive journey
+## How it works
 
-1. Briefing defaults to **Live / 24 hours**. Inspect source health, then select **Archive** for the supplied historical examples.
-2. Open Reliance’s **Profit growth deserves a closer look**. Compare Revenue, EBITDA, PBT and PAT, then open the original PDF page. This parser is limited to that reviewed consolidated Q1 FY26 table.
-3. Inspect the investment-sale disclosure and Ananya’s relevant experience. Select **Ask about this filing** and trace each passage to its original page.
-4. In Network, search `IT Services`, `credit risk` or `semiconductors`. Kavya’s introduction path is explicitly **You → Rohan Shah → Kavya Rao**.
-5. Save an event, change watched categories/thresholds, inspect the alerts dialog, and review the monitoring status. Monitoring pauses when the backend stops.
+The backend is FastAPI, with SQLite/FTS5 for document search and a plain JavaScript frontend. There is no frontend build step. Background jobs handle downloads and research, while a single scheduler checks announcements and completed-session market data when the backend is running.
 
-## Populate and verify the primary research library
+Screener and Yahoo help locate companies and documents. Pull research itself uses issuer or exchange PDFs: annual reports and call transcripts, with company, document type and reporting period kept separate. Broker commentary and news are not retrieved, and the model is instructed to stay within the supplied passages.
 
-Enter a ticker such as `HDFCBANK` or `MARUTI` in Research and submit your question. The job shows discovery, download, indexing and analysis progress. Company identity uses the official NSE directory when available, with labelled exact quote-link/metadata fallbacks. Screener and Yahoo serve only as directories: their financial commentary never enters research. The PDF must establish its company, type and reporting period. Researching a company does not automatically add it to the portfolio.
+Generated answers take at most two model calls. A reviewer checks each draft finding against its own citations and selects supporting source lines. Python validates those references and copies the quotations. Answers are cached against their evidence and model configuration. These checks reduce mistakes, but they do not establish that an answer is complete or financially correct.
 
-Acquisition aims for one annual report and two distinct transcript periods, reuses indexed evidence and applies a ten-minute cooldown to incomplete attempts. **Fetch missing sources / retry** bypasses the cooldown. Blocked or JavaScript-only sites, scanned PDFs and unfamiliar layouts can still require manual import. Arbitrary ticker support does not guarantee source availability for every company or period.
+The network stays in the workspace and is not included in model requests. You can import contacts using the format in [examples/contacts.json](examples/contacts.json). The hosted password gate protects one shared demo workspace; a real multi-investor product would need individual accounts, ownership checks and consent/deletion controls.
 
-Test acquisition without model calls:
+## What is still limited
 
-```sh
-python3 manage.py acquire --symbols HDFCBANK MARUTI
-# Explicit retry:
-python3 manage.py acquire --symbols HDFCBANK MARUTI --force
-```
+Announcement coverage is partial. The NSE date-range endpoint returned 403 during live testing, so the app also reads the exchange’s recent RSS feed and configured company IR pages. A short RSS snapshot cannot prove that every filing in a requested window has been captured. Source health and failures stay visible.
 
-Inspect `data/verification/acquire.json`. Partial acquisition returns a nonzero exit status while retaining imported documents. `POST /api/research` acquires missing sources by default; `auto_acquire: false` restricts it to indexed sources. Filing research always stays within the selected filing.
+The Reliance results table is a parser for one reviewed archived filing, not a general financial-table extractor. Research can return incomplete answers, and some current transcript links remain inaccessible. There is no automatic OCR, four-quarter promise tracker, executive biography scraper or device/email push notification.
 
-```sh
-python3 manage.py status
-# Run acquisition, AI smoke, feed refresh and evaluation in sequence:
-python3 manage.py verify --include-historical
-python3 manage.py prepare
-# Optional: also import clearly dated, verified historical fallback transcripts.
-python3 manage.py prepare --include-historical
-python3 manage.py smoke-ai
-python3 manage.py refresh
-FINN_REVIEW_MODEL=gpt-6.1-sol python3 manage.py evaluate
-```
+Local state persists in `data/` or `FINN_DATA_DIR`. The free hosted demo has temporary runtime storage, and monitoring pauses while it sleeps. It defaults to evidence mode unless an API key is added. The [deployment notes](docs/DEPLOYMENT.md) cover those choices and the access gate.
 
-These commands write reports to private `data/verification/`. Failed or incomplete acceptance checks return nonzero. `evaluate` asks three questions each of TCS, Infosys, Reliance and Asian Paints; passing structural checks still requires manual claim-by-claim inspection.
-
-[examples/primary_sources.json](examples/primary_sources.json) contains twelve latest targets and six historical fallbacks. Web inspection verified six latest PDF identities; six BSE transcript links returned 403 and require review. The preparation command only downloads content-verified entries, checks the downloaded identity/type/year, preserves provenance and indexes the original PDF pages. A discovery listing date is **never** used as a reporting period: one observed TCS row labelled July 2026 linked to a July 2025 transcript.
-
-Research → **Find annual reports & transcripts** supports any NSE ticker with available source pages. Open each PDF, confirm company/type/period, then import. For inaccessible sources, use the original company's IR site or manually upload a lawfully obtained text-searchable PDF (up to 100 MB for annual reports; 25 MB for transcripts and filings). The interface shows missing coverage, provenance and periods. Filings remain a separate research scope; they are never silently substituted for annual reports/transcripts.
-
-If the backend cannot download PDFs, obtain them through your browser using the official manifest links. Place verified documents in an inbox with names such as `TCS-annual_report-FY2026.pdf` or `ASIANPAINT-transcript-Q2-FY2026.pdf`, then run:
-
-```sh
-python3 manage.py prepare --include-historical --local-dir data/inbox
-```
-
-This mode makes no network requests. Missing files and unverified candidates stay missing; reporting periods are never inferred from filenames. The report lists each expected `local_filename`. Local files are checked against the reviewed manifest, and their verification label identifies the local import route. Real AI calls and live feeds still require network access.
-
-[Discovery evidence and official links](docs/SOURCE_DISCOVERY.md) explain what was inspected and what remains missing.
-
-## What is implemented
-
-- Four responsive views: Briefing, Research, Network and Portfolio; saved/read states and explicit archive/live windows.
-- Eighteen-company mock portfolio. `TMPV` replaces stale `TATAMOTORS`; migration preserves historical records under the old symbol. `TMCV` is a separate commercial-vehicles company, not an alias for historical evidence. [NSE symbol circular](https://nsearchives.nseindia.com/content/circulars/CML70875.pdf).
-- PDF upload and public HTTPS import; page-preserving chunks, content deduplication, strict company/type/period retrieval and source links. Retrieval expands common research questions, removes near-duplicate passages and distributes evidence across documents.
-- Bounded analyst → reviewer pipeline using the [OpenAI Responses API](https://developers.openai.com/api/docs/guides/structured-outputs). Every finding needs valid citation IDs; each reviewer claim includes only its cited passages. Invalid output fails back to evidence. Diagnostics distinguish connectivity, authentication, quota, access, timeouts and validation. Cache keys include exact evidence, source metadata, model and pipeline version. Token usage and latency are recorded when available.
-- NSE date-range announcements, an official recent RSS fallback across followed companies, a configurable company-IR fallback and Yahoo end-of-day data. Live RSS retrieval/parsing passed on a short overnight snapshot without portfolio matches. Configured company-IR pages supplement that feed. Its finite recent feed always reports partial window coverage. Persisted refresh history and deduplication remain in place. NSE returned HTTP 403 in live testing; the fallback successfully covered Reliance only (1/18 companies) and reports partial coverage. Date-only announcements explicitly show that publication time is unknown. Prices exclude incomplete/future sessions; volume uses the preceding twenty sessions. Split-affected windows do not generate threshold alerts.
-- A single local scheduler checks announcements every fifteen minutes and completed-session prices after 16:00 Asia/Kolkata. Persistent in-app alerts are unique per event/session and link to research/contacts. Failed market refreshes cannot alert on stale cached prices. Browser badges poll every thirty seconds; no email or device notifications are sent.
-- Validated JSON contact import, multiple employers with dates, expertise, education, explicit introduction paths and no-match responses. Use [examples/contacts.json](examples/contacts.json) to replace or merge a network. Employment overlap alone does not invent a relationship.
-- Additive, versioned SQLite migrations preserve saved events, uploads and settings. Imported contacts are not overwritten by startup seeding.
-
-## Architecture, privacy and costs
-
-```mermaid
-flowchart LR
-    UI[Mobile web interface] --> API[FastAPI]
-    API --> Jobs[Bounded background jobs]
-    Scheduler[Local scheduler] --> Feeds[NSE / Yahoo]
-    Jobs --> Discovery[Primary PDF discovery / import]
-    Feeds --> DB[(SQLite + PDF files)]
-    Discovery --> DB
-    DB --> Retrieval[Company / type / period retrieval]
-    Retrieval --> Analyst[Optional analyst]
-    Analyst --> Reviewer[Claim-specific evidence reviewer]
-    Reviewer --> API
-    DB --> Alerts[Deduplicated in-app alerts]
-    DB --> Network[Explicit network relationships]
-    Alerts --> UI
-    Network --> API
-```
-
-At most two model calls per uncached research request, with no multi-round debate and `store=False`. Only the question and selected primary-source passages are sent; profiles are not sent to the model. Evidence mode and cached answers require no new model call. The latest batch had eleven uncached answers using 100,139 analyst tokens and 86,660 reviewer tokens, with observed request latency of about 9.5–23.2 seconds; one answer was cached. These are measured token counts, not a billing claim. See [research evaluation](docs/EVALUATION.md) for quality limits.
-
-Workspace state stays in `data/` or `FINN_DATA_DIR`, on the local machine or hosting volume, until the owner removes it. An optional shared HTTP Basic gate protects the UI, PDFs and APIs for the hosted demonstration. It does not isolate multiple investors: all authenticated demo users share one workspace. Same-origin write checks remain active. [Deployment and retention notes](docs/DEPLOYMENT.md) cover Render and remaining production work.
-
-Inspired by **CS787 AlphaAgents**, by Aamir Ahmad, Aaryan Maheshwari, Aviral Gupta, Pallav Rastogi and Suyash Kapoor. Reused concepts include scoped tools, grounded analysis, deterministic numeric tools and critique before synthesis. FINN is separate code with a smaller pipeline; the original project and attribution are preserved. Archived company PDFs remain the property of their issuers.
-
-## Check and package
+## Checks and useful commands
 
 ```sh
 FINN_DISABLE_MONITOR=1 python3 -m unittest discover -s tests -v
 node --check static/app.js
-python3 package_submission.py
-```
-
-`dist/finn-submission.zip` is an allowlisted source bundle with 24 public PDFs, a generated public-only search index and a SHA-256 file manifest. It excludes `.env`, investor runtime databases/uploads, contacts, caches, alerts and personal verification reports. The bundled database contains only public documents, extracted text, company metadata and default settings. It does not publish to GitHub or deploy anything.
-
-[Five-minute demo and phone QA checklist](docs/DEMO.md) · [Submission email draft](docs/SUBMISSION_EMAIL.md) · [Implementation plan](IMPLEMENTATION_PLAN.md).
-
-## Remaining work
-
-- Successfully download/index the annual reports and transcripts; resolve the six unverified current transcript candidates. Four annual reports and eight transcripts are indexed; six newer transcript candidates still require verification.
-- The real analyst/reviewer filing smoke check passed. Evaluate and inspect at least nine fundamental-research answers plus the unseen ticker.
-- Exercise live feeds successfully and validate all current portfolio symbols. A user-terminal run successfully refreshed all eighteen symbols; NSE announcements still failed access checks.
-- Validate discovery parsing against downloaded live HTML. Its section/parser behavior is fixture-tested; the runtime fetch remains blocked.
-- Complete real desktop/phone QA. No browser-control tool is available and local sockets are denied in this session.
-- General table extraction, four-quarter promise tracking, OCR, management biographies and outbound alerts remain deferred.
-- Build/test the container, deploy behind appropriate access controls, publish the repository, attach actual build-history exports and send the submission only when explicitly instructed.
-
-The analyst and reviewer request JSON explicitly in their input payloads as well as their instructions, following the [official JSON-mode guidance](https://developers.openai.com/api/docs/guides/structured-outputs#json-mode). Annual-report downloads, local imports and uploads share a 100 MB cap; filings/transcripts share a 25 MB cap. PDF imports retain the 1,000-page cap.
-
-The research pipeline now restores page context from stored chunks, requires supporting quotations matched to each claim’s own citations, and checks that numerical literals appear in those quotations or their reporting periods. These are conservative checks, not proof of semantic correctness. Source inspection found errors that the initial model reviewer missed; see [the evaluation record](docs/EVALUATION.md). The new pipeline uses a different cache version.
-
-For diagnosis, `python3 manage.py evaluate --symbols TCS --question-index 3` evaluates just the cash-flow question for TCS. Evaluation files are archived automatically before replacement. The current pipeline also recognises fiscal ranges and PDF layout spacing; reviewer edits remain restricted to the draft’s own sources and are checked against supporting quotations.
-
-The current reviewer uses [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) with source IDs constrained to actual evidence. It selects numbered source lines; Python copies their text into the supporting quotations. This avoids invented example IDs and errors while retyping financial-table rows. Wrong-source and out-of-range references are still withheld and reported specifically.
-
-## Official-company filing fallback
-
-When NSE fails, FINN can read dated PDF links from configured official-company pages. `examples/announcement_sources.json` currently configures Reliance’s public IR page; other sources can be configured with FINN_ANNOUNCEMENT_SOURCES. A live 30-day refresh imported ten Reliance filings and created five alerts. This is partial coverage of one of eighteen companies, not an NSE success or a complete digest. Date-only entries are labelled with unknown publication time; their overlapping calendar days are included in selected windows. Source failures remain visible.
-
-```sh
+python3 manage.py acquire --symbols HDFCBANK MARUTI
 python3 manage.py refresh --days 30
 ```
 
-## Reviewer selection and browser QA
+For browser checks, install `requirements-dev.txt` and run `python3 browser_qa.py` with Chrome installed. It uses a temporary database copy and disables external acquisition, monitoring and model calls.
 
-`FINN_REVIEW_MODEL` configures the reviewer independently from FINN_MODEL. It defaults to the analyst model. A targeted gpt-6.1-sol reviewer run correctly rejected an unconfirmed analyst premise that the mini-only reviewer had accepted. Broader source review is still required. The [official model documentation](https://developers.openai.com/api/docs/models/gpt-6.1-sol) lists Responses, Structured Outputs and low reasoning effort support. The reviewer uses low effort and a bounded output budget for this model. A stronger reviewer has a higher per-call cost; test a targeted case first. No API key is changed by model selection.
+The latest suite passed 102 tests. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
 
-```sh
-FINN_REVIEW_MODEL=gpt-6.1-sol python3 manage.py evaluate --symbols ASIANPAINT --question-index 1
-```
+Reports under `data/verification/` are private. [VERIFICATION.md](VERIFICATION.md) summarises the evidence; [DEMO.md](docs/DEMO.md) has the walkthrough. `python3 package_submission.py` builds an allowlisted source archive with public documents and a file-hash manifest, excluding credentials and investor runtime data.
 
-For browser verification, install the optional development dependency and use the existing Chrome installation:
+## Background
 
-```sh
-python3 -m pip install -r requirements-dev.txt
-python3 browser_qa.py
-```
-
-The runner starts a temporary local server against a database snapshot, disables model calls/monitoring, exercises desktop and 390px phone layouts and saves screenshots/report privately. It checks archive events, saved state, PDF access/upload, research evidence/progress/errors, contacts/imports, alerts and settings. The user reran the browser checks after acquisition/access changes: both widths passed. Earlier representative screenshots were inspected. The runner disables automatic external acquisition and hosted access in its isolated local snapshot. It does not mutate the working database or validate live AI answers. Physical-device Safari and accessibility audits remain separate work.
+FINN draws on CS787 AlphaAgents by Aamir Ahmad, Aaryan Maheshwari, Aviral Gupta, Pallav Rastogi and Suyash Kapoor. It is a separate application with a smaller research pipeline, using scoped evidence, deterministic calculations and review before synthesis. The original project and its attribution are preserved. Company PDFs retain their original provenance.

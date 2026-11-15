@@ -1,25 +1,26 @@
 To: assessment@enam.com
 Subject: IIT Kanpur – Founding AI Engineer - 2027
 
-Draft — replace bracketed fields and finish the verification checklist before sending. No email has been sent.
+Draft: add your name, actual AI-session links/exports and the demo password directly in the submission email. Confirm repository visibility before sending. No email has been sent.
 
 Hello ENAM team,
 
-FINN is a mobile-first investment desk built around a short journey: portfolio event → original-source evidence → someone in the investor’s network who can add context.
+I’m submitting FINN, a mobile-first investment research app that connects a portfolio event to the original company document and someone in the investor’s network who might help explain it.
 
-Prototype: [DEPLOYED URL]
-Repository: https://github.com/unordinarysubstance/FINN [CURRENTLY PRIVATE; approve public visibility before submission]
-Actual AI build history: [CONVERSATION EXPORTS OR SHARE LINKS]
+Prototype: https://finn-rzzb.onrender.com/
+Login: finn — [PROVIDE THE DEMO PASSWORD PRIVATELY IN THE EMAIL]
+Repository: https://github.com/unordinarysubstance/FINN
+AI build history: [ACTUAL SESSION SHARE LINKS OR ATTACHED EXPORTS]
 
-The prototype uses FastAPI, SQLite/FTS5 and a plain JavaScript interface. It has historical company filings, company-scoped PDF retrieval with page citations, an optional analyst/reviewer model workflow, configurable monitoring with persisted in-app alerts, and explainable contact matching inside event and research views. Synthetic contacts include employment histories and explicit second-degree relationships. Shared employment is not treated as proof that people know each other.
+The app follows eighteen companies, prioritises announcements and creates in-app alerts for configured categories and unusual end-of-day price/volume moves. Research accepts NSE company tickers beyond the demo set, acquires available annual reports and call transcripts, and links findings to original PDF pages. Synthetic contacts appear inside events and research, with reasons to reach out and explicitly recorded second-degree introductions. Contacts can also be searched directly or imported as JSON; I did not scrape LinkedIn.
 
-The source-reviewed configuration uses gpt-4o-mini for drafting and gpt-6.1-sol for review. Retrieval and threshold arithmetic are deterministic. Model work is bounded to an analyst and a reviewer; the reviewer selects supporting source lines separately for each claim. Successful answers are cached by evidence, models and pipeline version. Only source passages and questions leave the backend; network profiles stay local. Source failures and missing research coverage remain visible.
+The backend is FastAPI with SQLite/FTS5, original PDF files and a plain JavaScript frontend. Optional AI analysis uses a cheap drafting pass and a stronger evidence-review pass, bounded to two calls and cached against the exact evidence and model configuration. The tested pair is gpt-4o-mini and gpt-6.1-sol. Source-line checks and deterministic financial arithmetic constrain the model; network profiles are not sent to it.
 
-A zero-payment Render demo is prepared with Docker, temporary SQLite/PDF runtime storage, bundled-corpus restoration and a shared password gate. The free host can reset user changes and pause monitoring while asleep. [ADD ACTUAL DEPLOYED URL, VERIFIED OUTCOME AND ACCESS DETAILS AFTER LAUNCH.] Runtime data and secrets are excluded from the repository. Real multi-user deployment would need investor-level access control, consented imports, deletion/retention controls and encrypted storage.
+The hosted demo uses Render Free with a shared password gate. It works without a model key in evidence mode, and user changes can reset when the service sleeps or restarts; bundled public documents restore automatically. Monitoring runs only while the backend is awake. A production version would need durable storage, per-investor ownership, individual authentication and consent/deletion controls.
 
-I prioritised the integrated workflow over a general financial-table parser, a multi-round debate engine or automated outreach. The Reliance results parser is source-specific. The packaged corpus contains four annual reports, eight transcripts and twelve historical filings. All eighteen price feeds refreshed, and the official-company fallback imported ten Reliance announcements with five alerts. NSE returned HTTP 403, so announcement coverage is partial (Reliance only). The twelve-question AI run passed structural checks; assistant source inspection matched 67 support spans to original PDFs and recorded incomplete answers. Chrome interaction checks passed at desktop and phone widths. Full validation details and remaining transcript, research and deployment limits are in VERIFICATION.md.
+Validation includes 102 passing tests, desktop/phone-width browser checks, live acquisition for HDFC Bank and Maruti, all eighteen price feeds and owner-confirmed hosted workflows. The twelve-answer AI evaluation passed structural checks, while source inspection recorded incomplete answers and reviewer mistakes. Announcement coverage is partial when NSE denies access. The Reliance numeric parser supports one reviewed filing; it is not a general table extractor. I left out the four-quarter promise tracker, executive biographies and outbound notifications to keep the main journey working.
 
-The design draws on CS787 AlphaAgents by Aamir Ahmad, Aaryan Maheshwari, Aviral Gupta, Pallav Rastogi and Suyash Kapoor. The original project is preserved; FINN is a separate application using the supplied archived public filing corpus and a smaller bounded research pipeline.
+The design builds on CS787 AlphaAgents by Aamir Ahmad, Aaryan Maheshwari, Aviral Gupta, Pallav Rastogi and Suyash Kapoor. FINN is separate code with a smaller research pipeline; the original project and attribution are preserved.
 
 Regards,
 [YOUR NAME]

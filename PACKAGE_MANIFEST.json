@@ -26,13 +26,13 @@
   },
   {
     "path": "README.md",
-    "bytes": 19050,
-    "sha256": "7d2e6ad04819243d734467f7215331d4a3dc34d712dc05731ed32f3b5c168c5c"
+    "bytes": 6868,
+    "sha256": "1241a036295cb49c8c0235b1ee49c4894a5bbf5194a72aa06d85e80fdf27d251"
   },
   {
     "path": "VERIFICATION.md",
-    "bytes": 10883,
-    "sha256": "0afcb1e259b9efd672d980ee726d2b119f709ffc5f494943afc2c91e724e9a1e"
+    "bytes": 11315,
+    "sha256": "f2600da7d34bb54fe3b9e9451a8477111fae702d5be12e9edaec2d5646ac664c"
   },
   {
     "path": "access.py",
@@ -67,7 +67,7 @@
   {
     "path": "demo_data/public.sqlite3",
     "bytes": 14065664,
-    "sha256": "f619f201ca1555ff79cac34b8e179d6c791dc56e8abada846968af3fcc2f4880"
+    "sha256": "3212e7e2a0c87d20fc3f02166471a1daabc5a7a77fb7fdca88ff489fd78168ee"
   },
   {
     "path": "demo_documents/BAJFINANCE.pdf",
@@ -196,8 +196,8 @@
   },
   {
     "path": "docs/CHALLENGE_AUDIT.md",
-    "bytes": 6213,
-    "sha256": "c0df27f63596421ae2632b685a2fa1bae734d2bc99a585adb3314a5f7d032ecf"
+    "bytes": 6419,
+    "sha256": "d8632edc23fd20f1045d4924a919412b845786791a4b9ffb6b40a457166cb53d"
   },
   {
     "path": "docs/DEMO.md",
@@ -206,8 +206,8 @@
   },
   {
     "path": "docs/DEPLOYMENT.md",
-    "bytes": 4549,
-    "sha256": "426afd827e617fa289bc3ecdd5baeffa632df6218e36840f8d31ca215fd49df7"
+    "bytes": 4824,
+    "sha256": "9b4e4e75fc8dcf1770d04b5cd49304c797242d531eaab64f41f45e1a301e9085"
   },
   {
     "path": "docs/EVALUATION.md",
@@ -221,8 +221,8 @@
   },
   {
     "path": "docs/SUBMISSION_EMAIL.md",
-    "bytes": 3161,
-    "sha256": "a78a571d51d06e95c52052ef0563920c30f1bb0fef787ca9cf31bcd5cbe92939"
+    "bytes": 2914,
+    "sha256": "f4c789b756898be31290fe1b7fea8aa416dc6c8c9961be90c0e41cb727b58c7c"
   },
   {
     "path": "examples/announcement_sources.json",
