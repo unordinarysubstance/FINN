@@ -31,7 +31,7 @@ Open http://127.0.0.1:8000. The checkout includes 24 public PDFs and their searc
 
 An API key is optional. Without one, Research returns source passages and PDF links. Generated answers now use Gemini Flash for both drafting and review. Follow [the Gemini setup](docs/GEMINI.md) to create a free-tier Google AI Studio key, then add it to your local `.env` or Render's secret environment. Keep an existing `.env` intact and leave it out of Git.
 
-The default model is `gemini-3.8-flash`. Each uncached answer uses at most two requests; a quota or validation failure returns source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
+The default model is `gemini-3.8-flash`. Each uncached answer has two model passes, with up to three HTTP attempts per pass for temporary server failures; a quota or validation failure returns source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
 
 OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI; Gemini needs its own live evaluation once your key is configured.
 
@@ -41,7 +41,7 @@ The backend is FastAPI, with SQLite/FTS5 for document search and a plain JavaScr
 
 Screener and Yahoo help locate companies and documents. Pull research itself uses issuer or exchange PDFs: annual reports and call transcripts, with company, document type and reporting period kept separate. Broker commentary and news are not retrieved, and the model is instructed to stay within the supplied passages.
 
-Generated answers take at most two model calls. A reviewer checks each draft finding against its own citations and selects supporting source lines. Python validates those references and copies the quotations. Answers are cached against their evidence and model configuration. These checks reduce mistakes, but they do not establish that an answer is complete or financially correct.
+Generated answers use two model passes. Temporary Gemini server failures get at most two retries per pass, with short backoff; quota/authentication failures stop immediately. A reviewer checks each draft finding against its own citations and selects supporting source lines. Python validates those references and copies the quotations. Answers are cached against their evidence and model configuration. These checks reduce mistakes, but they do not establish that an answer is complete or financially correct.
 
 The network stays in the workspace and is not included in model requests. You can import contacts using the format in [examples/contacts.json](examples/contacts.json). The hosted password gate protects one shared demo workspace; a real multi-investor product would need individual accounts, ownership checks and consent/deletion controls.
 
@@ -64,7 +64,7 @@ python3 manage.py refresh --days 30
 
 For browser checks, install `requirements-dev.txt` and run `python3 browser_qa.py` with Chrome installed. It uses a temporary database copy and disables external acquisition, monitoring and model calls.
 
-The latest suite passed 111 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
+The latest suite passed 116 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
 
 Reports under `data/verification/` are private. [VERIFICATION.md](VERIFICATION.md) summarises the evidence; [DEMO.md](docs/DEMO.md) has the walkthrough. `python3 package_submission.py` builds an allowlisted source archive with public documents and a file-hash manifest, excluding credentials and investor runtime data.
 

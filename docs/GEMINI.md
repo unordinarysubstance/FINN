@@ -33,7 +33,7 @@ python3 manage.py evaluate --symbols TCS --question-index 1
 python3 manage.py evaluate
 ```
 
-A full uncached evaluation can make up to 24 requests, so a small free quota may interrupt it. Structural pass counts do not establish factual correctness. Gemini needs its own original-page review; the older OpenAI evaluation does not validate this provider.
+A full uncached evaluation uses up to 24 model passes; temporary server failures can increase that to 72 HTTP attempts. A small free quota may interrupt it. Structural pass counts do not establish factual correctness. Gemini needs its own original-page review; the older OpenAI evaluation does not validate this provider.
 
 ## Existing Render service
 
@@ -46,8 +46,14 @@ The key remains on the backend. No additional Python dependency is needed: the t
 
 ## Quotas and data use
 
-Each uncached answer uses up to two model requests. Cached answers reuse the same evidence/provider/model configuration. There are no automatic retries, paid-provider failover, Google Search grounding or model tools. Quota exhaustion or provider/validation failure returns source evidence. FINN cannot determine your project's billing status from its API key; the free-tier project setting is what prevents API charges.
+Each uncached answer has two model passes, each limited to three HTTP attempts. Temporary HTTP 500/502/503/504 errors get short exponential backoff with jitter within the pass's remaining time budget; quota/authentication errors, invalid output and ambiguous transport failures are not retried. Cached answers reuse the same evidence/provider/model configuration. There is no paid-provider failover, Google Search grounding or model tool use. Quota exhaustion or provider/validation failure returns source evidence. FINN cannot determine your project's billing status from its API key; the free-tier project setting is what prevents API charges.
 
 Google's free-tier terms allow inputs and outputs to be used to improve its products. FINN sends the question and selected source passages, never contact profiles. Use public documents and avoid confidential questions/uploads with this free API. This differs from the earlier OpenAI store=False configuration. [Terms](https://ai.google.dev/gemini-api/terms).
 
 OpenAI support is retained for explicitly selected FINN_AI_PROVIDER=openai only. A leftover OpenAI key is ignored while Gemini is selected.
+
+## Temporary high demand (HTTP 503)
+
+The owner's first live Gemini smoke request reached Google and returned HTTP 503 UNAVAILABLE with a high-demand message, before the analyst completed. That is an unavailable-provider result, not a successful AI answer. FINN now retries explicit transient server failures up to two times, preserving the same model and payload. Diagnostics show analyst_attempts/reviewer_attempts on completed passes and error.attempts when server retries are exhausted. If Google remains unavailable, the app returns evidence with fallback_code temporarily_unavailable; no failed synthesis is cached.
+
+Run `python3 manage.py smoke-ai` again after the update. If all attempts still return 503, wait and retry later. Keep billing disabled and avoid launching the full evaluation until the smoke check passes. If choosing a different model, confirm its current free-tier availability and structured-output support in AI Studio, then set FINN_GEMINI_MODEL explicitly; FINN does not silently switch models. Provider capacity cannot be fixed by local retry code. [Google's retry guidance](https://ai.google.dev/gemini-api/docs/troubleshooting#retry-strategy).

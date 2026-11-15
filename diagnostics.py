@@ -23,6 +23,8 @@ def _classification(exc):
         return {'code':'rate_limit','message':'The provider rate limit was reached. Retry later.'}
     if status==400:
         return {'code':'invalid_request','message':'The provider rejected the request format, parameters, or model configuration.'}
+    if status in (500,502,503,504):
+        return {'code':'temporarily_unavailable','message':'The model provider is temporarily unavailable or overloaded. Please retry later.'}
     if 'Timeout' in name:
         return {'code':'timeout','message':'The provider timed out. Retry later.'}
     if isinstance(exc,socket.gaierror) or any(s in name for s in ('Connection','Connect','DNS')):
@@ -53,6 +55,8 @@ def failure(exc):
     status=getattr(exc,'status_code',None)
     if status is None: status=getattr(getattr(exc,'response',None),'status_code',None)
     if type(status) is int: result['http_status']=status
+    attempts=getattr(exc,'attempts',None)
+    if type(attempts) is int:result['attempts']=attempts
     body=getattr(exc,'body',None)
     if isinstance(body,dict):
         error=body.get('error',body)

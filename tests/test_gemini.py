@@ -110,10 +110,58 @@ class GeminiTests(unittest.TestCase):
 
     def test_reviewer_failure_does_not_publish_unreviewed_draft(self):
         draft=completion({'findings':[{'text':'Unsupported secret result','sources':[self.cid]}]})
-        with patch('ai_provider.httpx.post',side_effect=[draft,httpx.Response(503,json={'error':{'message':'Unavailable'}})]):
+        errors=[httpx.Response(503,json={'error':{'message':'Unavailable'}}) for _ in range(3)]
+        with patch('ai_provider.time.sleep'),patch('ai_provider.httpx.post',side_effect=[draft]+errors) as post:
             result=research('GEMTEST','revenue cash flow')
         self.assertTrue(result['diagnostics']['analyst_completed']);self.assertFalse(result['diagnostics']['reviewer_completed'])
         self.assertEqual(result['mode'],'evidence');self.assertNotIn('Unsupported secret result',str(result['findings']))
+        self.assertEqual(post.call_count,4);self.assertEqual(result['diagnostics']['error']['attempts'],3)
+
+    def test_transient_overload_retries_same_payload_and_reports_attempts(self):
+        responses=[httpx.Response(503,json={'error':{'status':'UNAVAILABLE'}}),
+                   httpx.Response(502,text='Bad gateway'),completion({'findings':[]})]
+        with patch('ai_provider.httpx.post',side_effect=responses) as post,patch('ai_provider.time.sleep') as sleep,patch('ai_provider.random.uniform',return_value=0):
+            result=self.call()
+        self.assertEqual(result.attempts,3);self.assertEqual(result.output_text,'{"findings": []}')
+        self.assertEqual([c.args[0] for c in sleep.call_args_list],[1,2])
+        self.assertEqual(post.call_count,3)
+        bodies=[c.kwargs['json'] for c in post.call_args_list]
+        self.assertTrue(all(body==bodies[0] for body in bodies))
+        self.assertTrue(all(response.is_closed for response in responses))
+
+    def test_persistent_overload_stops_after_three_attempts(self):
+        errors=[httpx.Response(503,json={'error':{'status':'UNAVAILABLE','message':'High demand'}}) for _ in range(3)]
+        with patch('ai_provider.httpx.post',side_effect=errors) as post,patch('ai_provider.time.sleep') as sleep,patch('openai.OpenAI') as paid:
+            result=research('GEMTEST','revenue cash flow')
+        self.assertEqual(post.call_count,3);self.assertEqual(sleep.call_count,2);paid.assert_not_called()
+        self.assertEqual(result['mode'],'evidence')
+        self.assertEqual(result['diagnostics']['fallback_code'],'temporarily_unavailable')
+        self.assertEqual(result['diagnostics']['error']['attempts'],3)
+        self.assertFalse(store.rows('SELECT * FROM cache'))
+        self.assertTrue(all(response.is_closed for response in errors))
+
+    def test_client_errors_and_ambiguous_timeouts_are_not_retried(self):
+        for status in (400,401,403,404,429):
+            with self.subTest(status=status),patch('ai_provider.httpx.post',return_value=httpx.Response(status,json={})) as post,patch('ai_provider.time.sleep') as sleep:
+                with self.assertRaises(GeminiError):self.call()
+                self.assertEqual(post.call_count,1);sleep.assert_not_called()
+        with patch('ai_provider.httpx.post',side_effect=httpx.ReadTimeout('response may already have generated')) as post:
+            with self.assertRaises(httpx.ReadTimeout):self.call()
+            self.assertEqual(post.call_count,1)
+
+    def test_long_retry_after_returns_without_retry(self):
+        for seconds in ('10','120'):
+            with self.subTest(seconds=seconds):
+                response=httpx.Response(503,json={},headers={'retry-after':seconds})
+                with patch('ai_provider.httpx.post',return_value=response) as post,patch('ai_provider.time.sleep') as sleep:
+                    with self.assertRaises(GeminiError) as error:self.call()
+                self.assertEqual(error.exception.attempts,1);self.assertEqual(post.call_count,1);sleep.assert_not_called()
+
+    def test_retry_does_not_reset_time_budget(self):
+        replies=[httpx.Response(503,json={}),completion({})]
+        with patch('ai_provider.httpx.post',side_effect=replies) as post,patch('ai_provider.time.sleep'),patch('ai_provider.random.uniform',return_value=0),patch('ai_provider.time.monotonic',side_effect=[0,0,1,3]):
+            self.call()
+        self.assertEqual([c.kwargs['timeout'].read for c in post.call_args_list],[45,42])
 
     def test_unknown_sources_and_wrong_source_lines_cannot_pass(self):
         cases=[({'findings':[{'text':'Invented','sources':['S9999999']}]},None),

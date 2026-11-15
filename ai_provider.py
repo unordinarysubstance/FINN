@@ -1,6 +1,8 @@
 """Server-side model transport. Gemini is the default; providers never fail over."""
 import os
 import re
+import random
+import time
 from types import SimpleNamespace
 import httpx
 
@@ -24,16 +26,37 @@ def configuration():
 
 
 class GeminiError(Exception):
-    def __init__(self,status_code,body):
+    def __init__(self,status_code,body,attempts=1):
         super().__init__('Gemini request failed.')
         self.status_code=status_code
         self.body=body
+        self.attempts=attempts
 
 
 class GeminiClient:
     """Map the two bounded JSON requests onto Gemini's generateContent REST API."""
     def __init__(self):
         self.responses=self
+
+    def _request(self,model,payload,timeout):
+        # Retry explicit server failures only. Quota/auth errors and ambiguous
+        # transport failures do not trigger more requests or another provider.
+        deadline=time.monotonic()+timeout
+        for attempt in range(1,4):
+            remaining=max(0.01,deadline-time.monotonic())
+            response=httpx.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+                                headers={'x-goog-api-key':os.environ['GEMINI_API_KEY'].strip()},
+                                json=payload,timeout=httpx.Timeout(remaining,connect=min(10,remaining)),follow_redirects=False)
+            if response.status_code not in (500,502,503,504) or attempt==3:
+                return response,attempt
+            delay=2**(attempt-1)+random.uniform(0,0.25)
+            # Honor a numeric Retry-After, without sleeping beyond this call's
+            # budget. Long waits return the error for an explicit later retry.
+            retry_after=response.headers.get('retry-after','')
+            if retry_after.isdigit():delay=max(delay,int(retry_after))
+            if delay>8 or time.monotonic()+delay+1>=deadline:return response,attempt
+            response.close()
+            time.sleep(delay)
 
     def create(self,*,model,instructions,input,text,max_output_tokens,timeout=45,**_):
         if not re.fullmatch(r'gemini-[A-Za-z0-9_.-]+',model):
@@ -46,14 +69,12 @@ class GeminiClient:
         payload={'systemInstruction':{'parts':[{'text':instructions}]},
                  'contents':[{'role':'user','parts':[{'text':input}]}],
                  'generationConfig':config}
-        # No key in the URL, redirects, tools, search grounding, or automatic retries.
-        response=httpx.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-                            headers={'x-goog-api-key':os.environ['GEMINI_API_KEY'].strip()},
-                            json=payload,timeout=httpx.Timeout(timeout,connect=10),follow_redirects=False)
+        # No key in the URL, redirects, tools, or search grounding.
+        response,attempts=self._request(model,payload,timeout)
         try:
             try:body=response.json()
             except ValueError:body={}
-            if response.status_code!=200:raise GeminiError(response.status_code,body)
+            if response.status_code!=200:raise GeminiError(response.status_code,body,attempts)
             if not isinstance(body,dict):raise ValueError('Invalid Gemini response.')
             candidates=body.get('candidates',[])
             if len(candidates)!=1 or candidates[0].get('finishReason')!='STOP':
@@ -62,7 +83,7 @@ class GeminiClient:
             output=''.join(p['text'] for p in candidates[0].get('content',{}).get('parts',[])
                            if isinstance(p.get('text'),str) and not p.get('thought'))
             usage=body.get('usageMetadata',{})
-            return SimpleNamespace(output_text=output,status='completed',usage=SimpleNamespace(
+            return SimpleNamespace(output_text=output,status='completed',attempts=attempts,usage=SimpleNamespace(
                 input_tokens=usage.get('promptTokenCount'),
                 output_tokens=usage.get('candidatesTokenCount',0)+usage.get('thoughtsTokenCount',0),
                 total_tokens=usage.get('totalTokenCount')))

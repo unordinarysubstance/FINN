@@ -170,7 +170,7 @@ def research(symbol,question,document_id=None,periods=None):
         instructions+=' In call transcripts, distinguish analyst questions from management statements: never present an unconfirmed premise in a question as a company-disclosed fact. Do not infer proven demand growth from launching a product or platform. Do not infer balance-sheet asset/liability movement from a cash-flow adjustment sign. Do not calculate differences or ratios; report the printed figures with their exact labels and basis.'
         draft=client.responses.create(model=model,store=False,instructions=instructions,input=json.dumps({'output_instruction':'Return the findings and limitations as JSON.','question':question,'scope':result['scope'],'selected_periods':periods or [],'evidence':source_data}),text={'format':{'type':'json_object'}},max_output_tokens=1600)
         parsed=parse_response(draft)
-        result['diagnostics'].update(analyst_completed=True,analyst_usage=token_usage(draft))
+        result['diagnostics'].update(analyst_completed=True,analyst_usage=token_usage(draft),analyst_attempts=getattr(draft,'attempts',1))
         if not isinstance(parsed.get('findings'),list) or not isinstance(parsed.get('limitations',[]),list): raise ValueError('Invalid analyst schema.')
         valid=[]
         for f in parsed['findings'][:5]:
@@ -203,7 +203,7 @@ def research(symbol,question,document_id=None,periods=None):
         result['diagnostics']['limitations_policy']='retrieval_scoped_v1'
         result['mode']='ai'; result['provider']=config['provider'];result['model']=model;result['review_model']=review_model
         result['review']='A second model pass checked each claim. Supporting quotations were copied from validated source line ranges. This does not guarantee factual correctness.'
-        result['diagnostics'].update(reviewer_completed=True,reviewer_usage=token_usage(review))
+        result['diagnostics'].update(reviewer_completed=True,reviewer_usage=token_usage(review),reviewer_attempts=getattr(review,'attempts',1))
         result['diagnostics']['revised_claims']=sum(f.get('revised',False) for f in result['findings'])
         result['diagnostics']['rejected_claims']+=len(rejections)
         result['diagnostics']['latency_ms']=round((time.monotonic()-started)*1000)
