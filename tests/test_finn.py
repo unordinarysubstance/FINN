@@ -13,7 +13,7 @@ class FinnTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
   cls.temp=tempfile.TemporaryDirectory();cls.old_data=store.DATA;store.DATA=Path(cls.temp.name)
-  cls.env=patch.dict(os.environ,{'OPENAI_API_KEY':'','FINN_DISABLE_MONITOR':'1','FINN_DISABLE_DEMO_SEED':'1'});cls.env.start()
+  cls.env=patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'','FINN_DISABLE_MONITOR':'1','FINN_DISABLE_DEMO_SEED':'1'});cls.env.start()
   cls.client=TestClient(app);cls.client.__enter__()
  @classmethod
  def tearDownClass(cls):
@@ -97,7 +97,7 @@ class FinnTests(unittest.TestCase):
   responses=[SimpleNamespace(output_text=json.dumps({'findings':[{'text':'Revenue increased by 10 percent in FY2025.','sources':[cid]},{'text':'Profit will triple next year.','sources':[cid]}],'limitations':[]})),SimpleNamespace(output_text=json.dumps({'checks':[{'index':0,'supported':True,'supports':[{'source':cid,'quote':'Revenue increased by 10 percent in FY2025.'}]},{'index':1,'supported':False,'reason':'No evidence supports the forecast.'}]}))]
   from unittest.mock import MagicMock
   client=MagicMock();client.responses.create.side_effect=responses
-  with patch.dict(os.environ,{'OPENAI_API_KEY':'test-key'}),patch('openai.OpenAI',return_value=client):
+  with patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'test-key'}),patch('openai.OpenAI',return_value=client):
    result=research('MODELTEST','Explain revenue')
   self.assertEqual(result['mode'],'ai');self.assertEqual(len(result['findings']),1)
   self.assertNotIn('triple',result['findings'][0]['text'])
@@ -107,7 +107,7 @@ class FinnTests(unittest.TestCase):
   self.fake_pdf('BADMODEL','annual_report','Revenue increased. Cash flow remained positive throughout the reporting period. '*5)
   from unittest.mock import MagicMock
   client=MagicMock();client.responses.create.return_value=SimpleNamespace(output_text='{"findings":[{"text":"Invented result","sources":["S999999999"]}]}')
-  with patch.dict(os.environ,{'OPENAI_API_KEY':'test-key'}),patch('openai.OpenAI',return_value=client):result=research('BADMODEL','Explain revenue')
+  with patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'test-key'}),patch('openai.OpenAI',return_value=client):result=research('BADMODEL','Explain revenue')
   self.assertEqual(result['mode'],'evidence');self.assertTrue(result['citations'])
   self.assertTrue(any('failed validation' in l for l in result['limitations']))
  def test_source_failure_is_visible_and_preserves_archive(self):

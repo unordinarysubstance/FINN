@@ -140,6 +140,7 @@ def main():
     process=None
     # No API key is supplied to either the QA server or browser driver.
     os.environ['OPENAI_API_KEY']=''
+    os.environ['GEMINI_API_KEY']=''
     try:
         with tempfile.TemporaryDirectory(prefix='finn-browser-qa-') as temp:
             snapshot=Path(temp)/'finn.sqlite3';clone_database(data/'finn.sqlite3',snapshot)
@@ -150,7 +151,7 @@ def main():
             with socket.socket() as port_probe:
                 port_probe.bind(('127.0.0.1',0));port=port_probe.getsockname()[1]
             base=f'http://127.0.0.1:{port}'
-            env={**os.environ,'FINN_DATA_DIR':temp,'FINN_DISABLE_MONITOR':'1','OPENAI_API_KEY':'','PYTHONUNBUFFERED':'1','FINN_REQUIRE_ACCESS':'0','FINN_ACCESS_PASSWORD':''}
+            env={**os.environ,'FINN_DATA_DIR':temp,'FINN_DISABLE_MONITOR':'1','OPENAI_API_KEY':'','GEMINI_API_KEY':'','PYTHONUNBUFFERED':'1','FINN_REQUIRE_ACCESS':'0','FINN_ACCESS_PASSWORD':''}
             with (output/'server.log').open('w') as log:
                 process=subprocess.Popen([sys.executable,'-m','uvicorn','app:app','--host','127.0.0.1','--port',str(port),'--workers','1','--log-level','warning'],cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
                 try:

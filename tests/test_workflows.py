@@ -16,7 +16,7 @@ from app import app
 class WorkflowTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.old=store.DATA;store.DATA=Path(self.temp.name);store.init(seed_demo=False)
-  self.env=patch.dict(os.environ,{'OPENAI_API_KEY':'','FINN_DISABLE_MONITOR':'1'});self.env.start()
+  self.env=patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'','FINN_DISABLE_MONITOR':'1'});self.env.start()
   with store.db() as c:
    c.execute("INSERT INTO companies VALUES ('TCS','Tata Consultancy Services','IT Services',1)")
  def tearDown(self):
@@ -103,7 +103,7 @@ class WorkflowTests(unittest.TestCase):
   self.pdf('TCS','transcript','Management expects demand uncertainty to continue. '*10,'Q1 FY2027')
   citations=store.retrieve('TCS','Revenue demand');cid='S'+str(citations[0]['id'])
   client=MagicMock();client.responses.create.side_effect=[SimpleNamespace(output_text=json.dumps({'findings':[{'text':'Supported claim','sources':[cid]}],'limitations':[]})),SimpleNamespace(output_text=json.dumps({'checks':[{'index':0,'supported':True,'supports':[{'source':cid,'quote':'Revenue grew ten percent; operating cash flow was positive.'}]}]}))]
-  with patch.dict(os.environ,{'OPENAI_API_KEY':'not-real'}),patch('openai.OpenAI',return_value=client):r=research('TCS','Revenue demand')
+  with patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'not-real'}),patch('openai.OpenAI',return_value=client):r=research('TCS','Revenue demand')
   for call in client.responses.create.call_args_list:
    self.assertIn('JSON',call.kwargs['input'])
   payload=json.loads(client.responses.create.call_args.kwargs['input'])
@@ -113,7 +113,7 @@ class WorkflowTests(unittest.TestCase):
   self.pdf('TCS','annual_report','Revenue grew ten percent; operating cash flow was positive. '*10)
   cid='S'+str(store.retrieve('TCS','Revenue')[0]['id'])
   client=MagicMock();client.responses.create.side_effect=[SimpleNamespace(output_text=json.dumps({'findings':[{'text':'Claim','sources':[cid]}]})),SimpleNamespace(output_text='{"approved":[true],"issues":[]}')]
-  with patch.dict(os.environ,{'OPENAI_API_KEY':'not-real'}),patch('openai.OpenAI',return_value=client):r=research('TCS','Revenue')
+  with patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'not-real'}),patch('openai.OpenAI',return_value=client):r=research('TCS','Revenue')
   self.assertEqual(r['mode'],'evidence');self.assertEqual(r['diagnostics']['fallback_code'],'validation')
   class Quota(Exception):status_code=429;body={'code':'insufficient_quota'}
   self.assertEqual(failure(Quota())['code'],'quota')

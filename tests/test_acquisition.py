@@ -14,7 +14,7 @@ import store
 class AcquisitionTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.old=store.DATA;store.DATA=Path(self.temp.name);store.init(seed_demo=False)
-  self.env=patch.dict(os.environ,{'OPENAI_API_KEY':'','FINN_DISABLE_MONITOR':'1'});self.env.start()
+  self.env=patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'','FINN_DISABLE_MONITOR':'1'});self.env.start()
   self.company={'company_name':'Unseen Industries Limited','isin':'INE000A01001'}
   self.profile={'ticker':'UNSEEN','company_name':'Unseen Industries Ltd','exchange_link_verified':True,'website':'https://issuer.example','discovery_url':'https://www.screener.in/company/UNSEEN/','documents':[
    {'kind':kind,'url':'https://issuer.example/'+name+'.pdf','title':name,'discovery_url':'https://www.screener.in/company/UNSEEN/'} for kind,name in [('annual_report','annual'),('transcript','q2'),('transcript','q1')]]}

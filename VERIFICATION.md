@@ -2,7 +2,7 @@
 
 ## Current result
 
-The integrated local prototype works with public source documents, optional two-pass AI, source-aware monitoring, persistent alerts and synthetic contacts. Chrome checks passed at desktop and phone widths. The submission bundle starts from a clean extraction with a ready-to-search public corpus. The owner confirmed hosted readiness, login, original PDF access, research citations and Network search at https://finn-rzzb.onrender.com/. Public visibility is now authorized and awaits CLI confirmation; actual build-history links and the final covering email remain.
+The integrated local prototype works with public source documents, optional two-pass AI, source-aware monitoring, persistent alerts and synthetic contacts. Chrome checks passed at desktop and phone widths. The submission bundle starts from a clean extraction with a ready-to-search public corpus. The owner confirmed hosted readiness, login, original PDF access, research citations and Network search at https://finn-rzzb.onrender.com/. The owner's GitHub CLI confirmed the repository is public; actual build-history links and the final covering email remain.
 
 Research is usable with disclosed coverage limits. A structural pass is not a factual-accuracy score. Announcement coverage is partial, and six current transcript candidates remain unverified. The free deployment commit 3c5b063 was pushed and its hosted workflows were confirmed by the owner. The assistant could not independently fetch the hosted endpoints. No submission email has been sent.
 
@@ -12,13 +12,13 @@ All five pages of the challenge were checked. [CHALLENGE_AUDIT.md](docs/CHALLENG
 
 The automatic PDF validator was replayed against all twelve real bundled primary documents: all passed, with literal quarter-end labels retained where present.
 
-Added generic new-ticker acquisition before API research: company directory resolution/fallbacks, original issuer/exchange PDFs only, identity/type/period inspection, indexing, progress, cached attempts and explicit retry. Tests acquire a company outside all seeds and obtain company-scoped evidence without following it. Added official NSE RSS announcement fallback across followed companies, bounded-history coverage labels and deduplication across API/RSS transports. Added shared-demo HTTP Basic access, a minimal readiness route, proxy-origin tests and a Render Blueprint with persistent storage and a generated secret.
+Added generic new-ticker acquisition before API research: company directory resolution/fallbacks, original issuer/exchange PDFs only, identity/type/period inspection, indexing, progress, cached attempts and explicit retry. Tests acquire a company outside all seeds and obtain company-scoped evidence without following it. Added official NSE RSS announcement fallback across followed companies, bounded-history coverage labels and deduplication across API/RSS transports. Added shared-demo HTTP Basic access, a minimal readiness route, proxy-origin tests and a Render Blueprint with a generated secret; the later free-hosting revision removed its disk.
 
 The user confirmed push 9d63c8b, then real automatic HDFCBANK acquisition (one annual report and two transcripts), MARUTI partial acquisition (annual report only), a completed refresh of all eighteen price feeds, and passed Chrome checks at both widths. The RSS endpoint returned a valid recent overnight snapshot without portfolio matches; the date-range API still returned 403. MARUTI transcript links used an HTML viewer and exposed a parser gap. Generic encoded-query/embedded-PDF resolution and issuer-hosted brand-name handling are now fixed and regression-tested; the owner subsequently confirmed MARUTI ready with its FY2026 annual report and Q1/Q2 FY2027 transcripts, without acquisition failures. Successful RSS now also supplements configured company-IR pages instead of skipping them. This executor still cannot resolve external DNS or bind a browser server. No new paid model batch or cloud service was silently started.
 
 ## Free hosting choice — 15 November
 
-The user confirmed no Render resources exist and requested no payment. The default Blueprint now uses Free compute without a disk and temporary storage at /tmp/finn. The hosted app displays a reset/monitoring notice. Existing local data and credentials are unchanged. The default cloud deployment omits model credentials; AI remains an optional separately billed integration. A fresh-workspace smoke check verifies public-corpus restoration and hosted access; the owner has deployed it and confirmed the main hosted workflows. The Render-specific filesystem reset itself has not been independently tested remotely. See DEPLOYMENT.md for the revised free-runtime checks. Persistent local tests do not establish persistence on the free host.
+The user confirmed no Render resources exist and requested no payment. The default Blueprint now uses Free compute without a disk and temporary storage at /tmp/finn. The hosted app displays a reset/monitoring notice. Existing local data and credentials are unchanged. The default cloud deployment omits model credentials; AI remains optional and now supports the Gemini free tier with its own eligibility and quotas. A fresh-workspace smoke check verifies public-corpus restoration and hosted access; the owner has deployed it and confirmed the main hosted workflows. The Render-specific filesystem reset itself has not been independently tested remotely. See DEPLOYMENT.md for the revised free-runtime checks. Persistent local tests do not establish persistence on the free host.
 
 ## Evidence from real runs
 
@@ -26,15 +26,15 @@ The user confirmed no Render resources exist and requested no payment. The defau
 | --- | --- |
 | Primary corpus | Four FY2026 annual reports and eight current/historical transcripts indexed for TCS, INFY, RELIANCE and ASIANPAINT; one report and two transcripts per company. |
 | Archived corpus | Twelve original public filings, five dated archive events and a reviewed Reliance numeric example. |
-| Real AI | Latest full run: 12/12 structural passes; analyst `gpt-4o-mini`, reviewer `gpt-6.1-sol`, pipeline 6, low reviewer effort. Both passes completed; seven draft claims withheld. |
+| Real AI | Historical OpenAI full run: 12/12 structural passes; analyst `gpt-4o-mini`, reviewer `gpt-6.1-sol`, pipeline 6, low reviewer effort. Both passes completed; seven draft claims withheld. |
 | Assistant source inspection | All 41 retained findings inspected against selected passages. All 67 support spans independently matched text extracted from the original PDF pages. Main retained claims are supported within the scope described in docs/EVALUATION.md; several answers are incomplete or repetitive. This is not an independent human audit. |
 | Unreviewed caveat correction | An Infosys caveat wrongly said no explicit guidance was available despite guidance on a cited page. Analyst caveats now give way to a deterministic retrieval-scope notice. This applies to cached results without extra model calls; findings and reviewer decisions are unchanged. Offline SDK/cache regression checks cover both routes. |
 | Prices | All eighteen followed symbols refreshed successfully from Yahoo. Persistent real price alerts were observed. |
 | Announcements | NSE returned HTTP 403. The official Reliance IR fallback imported ten filings and created five alerts. Result is explicitly partial: one of eighteen followed companies. Publication dates with unknown times retain that precision. |
 | Browser | User-terminal Playwright/Chrome run passed twelve interaction checks at each of 1440×1000 and 390×844; no page errors. Representative screenshots inspected. |
 | Fresh package | 24 public PDFs, generated public-only SQLite/FTS index, manifest hashes verified. Clean extracted app started in about 1.3s, served every PDF, returned primary research evidence and preserved saved state across restart. |
-| Automated suite | Latest suite: 102/102 passed in 26.962 seconds. JavaScript syntax and Python compilation passed. |
-| Container/cloud/public repository | Owner reports the Render deployment working. Shared-login and read/research workflows confirmed; assistant network verification unavailable. Repository publication authorized, final visibility check pending. |
+| Automated suite | Latest suite: 111/111 passed in 43.079 seconds, including nine Gemini integration checks. JavaScript syntax and Python compilation passed. |
+| Container/cloud/public repository | Owner reports the Render deployment working. Shared-login and read/research workflows confirmed; assistant network verification unavailable. Repository is public, confirmed by the owner's authenticated GitHub CLI. |
 
 Private evidence is in `data/verification/`: `evaluate.json`, `source-review.json`, `refresh.json`, `browser/report.json`, browser screenshots and `package.json`. It is excluded from publication because reports can contain investor context. Public documentation summarises results without exporting that state.
 
@@ -62,7 +62,7 @@ The archive excludes `.env`, investor uploads, runtime data, verification report
 
 Earlier verification ran inside a restricted executor that could neither resolve external hosts nor connect to localhost. Those failures remain real observations of that executor. Subsequent commands run by the user in their normal terminal established the live AI, corpus, prices, fallback announcements and browser outcomes above. No permission bypass was used.
 
-Earlier mini-only AI evaluations fluctuated between 9/12 and 12/12 structural passes and failed source inspection. The source-reviewed full batch explicitly used the separate stronger reviewer. The app still defaults to the analyst model for both passes unless `FINN_REVIEW_MODEL` is set; the README gives the tested configuration. No silent paid-model configuration change was made to `.env`.
+Earlier mini-only AI evaluations fluctuated between 9/12 and 12/12 structural passes and failed source inspection. The source-reviewed full batch explicitly used the separate stronger reviewer. That configuration remains available with explicit OpenAI selection. The user has since requested Gemini Flash; pipeline 7 defaults both passes to Gemini. Local provider/model settings were updated without replacing existing credentials; a Gemini key still needs private entry.
 
 The initial Asian Paints annual-report download exceeded the 25 MB generic PDF cap. Annual reports now allow up to 100 MB, while transcripts/filings remain capped at 25 MB; the real report imported successfully. Schema migrations preserve original contacts, saved/read state and historical TATAMOTORS records while the current portfolio uses TMPV.
 
@@ -73,3 +73,7 @@ The initial Asian Paints annual-report download exceeded the 25 MB generic PDF c
 3. Push the final documentation changes and apply the now-authorized public visibility change to unordinarysubstance/FINN; verify its public status afterward.
 4. Add actual coding-agent conversation exports/share links; no build history has been fabricated.
 5. Fill the concrete links/name in docs/SUBMISSION_EMAIL.md, review the final note and submit by 15 November 2026. Sending requires explicit user instruction.
+
+## Gemini provider migration
+
+Pipeline 7 defaults to Gemini Flash for both model passes, using gemini-3.8-flash and server-side GEMINI_API_KEY. OpenAI requires explicit provider selection, and quota failures never trigger paid-provider failover. The source-line and numeric validators remain in place; cache keys now include provider identity. The current suite includes offline Gemini HTTP and end-to-end research checks. No Gemini key was available, so live smoke/evaluation and provider-specific answer inspection remain pending. The 12/12 OpenAI result above is historical, not Gemini acceptance. See [setup and verification](docs/GEMINI.md).

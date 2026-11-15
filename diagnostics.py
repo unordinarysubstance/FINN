@@ -41,6 +41,7 @@ def safe_provider_message(value):
         if value and len(value)>=6 and any(part in name.upper() for part in ('KEY','TOKEN','SECRET','PASSWORD')):
             text=text.replace(value,'[redacted]')
     text=re.sub(r'(?i)\b(?:sk|sess)-[A-Za-z0-9_-]+','[redacted]',text)
+    text=re.sub(r'\bAIza[A-Za-z0-9_-]+','[redacted]',text)
     text=re.sub(r'(?i)bearer\s+\S+','Bearer [redacted]',text)
     text=re.sub(r'https?://\S+','[URL removed]',text)
     return ' '.join(text.split())[:600]
@@ -56,7 +57,7 @@ def failure(exc):
     if isinstance(body,dict):
         error=body.get('error',body)
         if isinstance(error,dict):
-            for key in ('code','type','param'):
+            for key in ('code','type','param','status'):
                 value=error.get(key)
                 if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_.\[\]-]{1,100}',value):result['provider_'+key]=safe_provider_message(value)
             if isinstance(error.get('message'),str):result['provider_message']=safe_provider_message(error['message'])

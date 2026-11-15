@@ -11,7 +11,7 @@ from app import app
 class HostedAccessTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.old=store.DATA;store.DATA=Path(self.temp.name);store.init(seed_demo=False)
-  self.env=patch.dict(os.environ,{'FINN_REQUIRE_ACCESS':'1','FINN_ACCESS_USER':'finn','FINN_ACCESS_PASSWORD':'offline-test-password-only','FINN_DISABLE_MONITOR':'1','OPENAI_API_KEY':''});self.env.start()
+  self.env=patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','FINN_REQUIRE_ACCESS':'1','FINN_ACCESS_USER':'finn','FINN_ACCESS_PASSWORD':'offline-test-password-only','FINN_DISABLE_MONITOR':'1','OPENAI_API_KEY':''});self.env.start()
   self.client=TestClient(app)
  def tearDown(self):self.env.stop();store.DATA=self.old;self.temp.cleanup()
  def test_anonymous_users_cannot_read_or_write_workspace(self):
@@ -37,7 +37,7 @@ class HostedAccessTests(unittest.TestCase):
   for password in ('','short'):
    with patch.dict(os.environ,{'FINN_ACCESS_PASSWORD':password}):
     with self.assertRaises(ValueError):access.validate_configuration()
-  with patch.dict(os.environ,{'FINN_REQUIRE_ACCESS':'0','FINN_ACCESS_PASSWORD':''}):
+  with patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','FINN_REQUIRE_ACCESS':'0','FINN_ACCESS_PASSWORD':''}):
    access.validate_configuration();self.assertEqual(self.client.get('/api/overview').status_code,200)
  def test_proxy_https_origin_allows_authenticated_same_origin_writes(self):
   client=TestClient(ProxyHeadersMiddleware(app,trusted_hosts='*'),base_url='http://finn.example')

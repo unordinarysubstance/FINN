@@ -11,7 +11,7 @@ import store
 from seed import COMPANIES
 
 ROOT=Path(__file__).resolve().parent
-FILES=['app.py','access.py','acquisition.py','announcements.py','connectors.py','diagnostics.py','manage.py','monitoring.py','network.py','research.py','seed.py','store.py','package_submission.py','browser_qa.py','render.yaml','requirements-dev.txt','requirements.txt','README.md','VERIFICATION.md','IMPLEMENTATION_PLAN.md','.gitignore','.env.example','Dockerfile','.dockerignore']
+FILES=['app.py','access.py','acquisition.py','ai_provider.py','announcements.py','connectors.py','diagnostics.py','manage.py','monitoring.py','network.py','research.py','seed.py','store.py','package_submission.py','browser_qa.py','render.yaml','requirements-dev.txt','requirements.txt','README.md','VERIFICATION.md','IMPLEMENTATION_PLAN.md','.gitignore','.env.example','Dockerfile','.dockerignore']
 
 def public_index(entries,folder):
     """Export only allowlisted issuer PDFs and their extracted text, never investor state."""
@@ -91,11 +91,12 @@ def package():
         for name in entries:
             assert not any(part in ('data','.git','.aws','.codex','.agents','.venv','__pycache__') for part in Path(name).parts)
             assert name!='.env'
-        secret=__import__('os').getenv('OPENAI_API_KEY','').encode()
+        secrets=[value.encode() for name,value in __import__('os').environ.items()
+                 if value and len(value)>=6 and any(part in name.upper() for part in ('KEY','TOKEN','SECRET','PASSWORD'))]
         with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as bundle:
             for name,path in sorted(entries.items()):
                 data=path.read_bytes()
-                if secret and secret in data:raise ValueError('Configured API key detected in publication content.')
+                if any(secret in data for secret in secrets):raise ValueError('Configured credential detected in publication content.')
                 bundle.writestr('finn/'+name,data)
                 manifest.append({'path':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
             bundle.writestr('finn/PACKAGE_MANIFEST.json',json.dumps(manifest,indent=2))

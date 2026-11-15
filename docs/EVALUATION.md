@@ -39,6 +39,10 @@ Matching lines cannot establish semantic completeness. Numeric checks can also r
 
 The latest eleven uncached answers used 100,139 analyst tokens and 86,660 reviewer tokens, including output usage reported by the provider. Their measured latency ranged from about 9.5 to 23.2 seconds. The cached answer returned in 43 ms. These observations depend on request evidence and provider conditions; no invoice-derived cost or deterministic pass rate is claimed.
 
-At most two calls are made for an uncached request, with `store=False` and no contact profiles in input. Cache identity includes evidence, periods, both model names, review effort and pipeline version. The caveat-display correction leaves that evaluated claim protocol unchanged.
+At most two calls are made for an uncached request, with no contact profiles in input. OpenAI requests use `store=False`; Gemini uses generateContent under Google's free-tier data terms. Pipeline 7 adds provider identity to the cache alongside evidence, periods, both model names and review effort. Old OpenAI results cannot stand in for a Gemini evaluation.
 
-For a targeted check use `FINN_REVIEW_MODEL=gpt-6.1-sol python3 manage.py evaluate --symbols INFY --question-index 2`. Evaluation reports are archived before replacement. A structural pass always requires source inspection; model randomness, changing evidence or a different reviewer can change the outcome.
+For a targeted check of the current provider use `python3 manage.py evaluate --symbols INFY --question-index 2`. To reproduce the historical OpenAI configuration, explicitly select `FINN_AI_PROVIDER=openai FINN_REVIEW_MODEL=gpt-6.1-sol`. Evaluation reports are archived before replacement. A structural pass always requires source inspection; model randomness, changing evidence or a different reviewer can change the outcome.
+
+## Gemini migration
+
+Pipeline 7 defaults both passes to Gemini Flash (`gemini-3.8-flash`). Offline HTTP tests verify request authentication, JSON review schema, exact source-line copying, quota fallback, malformed/truncated output rejection, no paid-provider failover, and model-specific caching. These tests establish integration behavior, not live Gemini answer quality. A Gemini key was not present during implementation, so its smoke test, full evaluation and original-page inspection remain pending. Historical OpenAI acceptance results above are preserved as historical evidence.

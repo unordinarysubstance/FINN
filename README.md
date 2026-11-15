@@ -29,15 +29,11 @@ python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
 
 Open http://127.0.0.1:8000. The checkout includes 24 public PDFs and their search index, so the archive and document-search demo work without downloading them again. API documentation is at `/docs`.
 
-An API key is optional. Without one, Research returns relevant source passages and PDF links. To enable generated answers, use `.env.example` as a reference for your local `.env` and set `OPENAI_API_KEY`. Keep an existing `.env` intact and leave it out of Git.
+An API key is optional. Without one, Research returns source passages and PDF links. Generated answers now use Gemini Flash for both drafting and review. Follow [the Gemini setup](docs/GEMINI.md) to create a free-tier Google AI Studio key, then add it to your local `.env` or Render's secret environment. Keep an existing `.env` intact and leave it out of Git.
 
-The evaluated model setup uses `gpt-4o-mini` to draft findings and `gpt-6.1-sol` to review them. Select that reviewer when starting the server:
+The default model is `gemini-3.8-flash`. Each uncached answer uses at most two requests; a quota or validation failure returns source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
 
-```sh
-FINN_REVIEW_MODEL=gpt-6.1-sol python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --workers 1
-```
-
-Without that setting, both passes use `FINN_MODEL`, which defaults to `gpt-4o-mini`. Model requests use your API credits; free Render hosting does not cover them.
+OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI; Gemini needs its own live evaluation once your key is configured.
 
 ## How it works
 
@@ -68,7 +64,7 @@ python3 manage.py refresh --days 30
 
 For browser checks, install `requirements-dev.txt` and run `python3 browser_qa.py` with Chrome installed. It uses a temporary database copy and disables external acquisition, monitoring and model calls.
 
-The latest suite passed 102 tests. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
+The latest suite passed 111 tests, including offline Gemini transport and citation checks. Desktop and phone-width browser runs passed, all eighteen price feeds refreshed, and both HDFC Bank and Maruti acquired an annual report plus two transcripts. The hosted readiness, source links, research and Network flow were confirmed by the owner. A twelve-question AI evaluation passed structural checks; its source review and remaining answer-quality issues are recorded in [EVALUATION.md](docs/EVALUATION.md). A pass count is not an accuracy score.
 
 Reports under `data/verification/` are private. [VERIFICATION.md](VERIFICATION.md) summarises the evidence; [DEMO.md](docs/DEMO.md) has the walkthrough. `python3 package_submission.py` builds an allowlisted source archive with public documents and a file-hash manifest, excluding credentials and investor runtime data.
 

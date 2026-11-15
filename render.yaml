@@ -25,11 +25,10 @@ services:
         value: finn
       - key: FINN_ACCESS_PASSWORD
         generateValue: true
-      - key: FINN_MODEL
-        value: gpt-4o-mini
-      - key: FINN_REVIEW_MODEL
-        value: gpt-6.1-sol
-      - key: FINN_REVIEW_EFFORT
-        value: low
-# Leave OPENAI_API_KEY unset for a demo without model API charges.
-# Adding an API key enables AI and uses that provider account's credits/billing.
+      - key: FINN_AI_PROVIDER
+        value: gemini
+      - key: FINN_GEMINI_MODEL
+        value: gemini-3.8-flash
+# Add GEMINI_API_KEY privately in Render Environment, using a free-tier AI Studio
+# project without billing. With no key or on quota failure, FINN shows evidence.
+# OpenAI is never called unless FINN_AI_PROVIDER is explicitly set to openai.

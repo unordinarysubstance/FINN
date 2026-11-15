@@ -40,7 +40,7 @@ class ReviewTransportTests(unittest.TestCase):
     return httpx.Response(200,json=response)
    with httpx.Client(transport=httpx.MockTransport(handler)) as transport:
     with OpenAI(api_key='offline-test-key',http_client=transport) as client:
-     with patch.dict(os.environ,{'OPENAI_API_KEY':'offline-test-key','FINN_MODEL':'gpt-4o-mini','FINN_REVIEW_MODEL':'gpt-6.1-sol','FINN_REVIEW_EFFORT':'low'}),patch('openai.OpenAI',return_value=client):
+     with patch.dict(os.environ,{'FINN_AI_PROVIDER':'openai','GEMINI_API_KEY':'','OPENAI_API_KEY':'offline-test-key','FINN_MODEL':'gpt-4o-mini','FINN_REVIEW_MODEL':'gpt-6.1-sol','FINN_REVIEW_EFFORT':'low'}),patch('openai.OpenAI',return_value=client):
       result=research('SDKTEST','operating cash flow and profit')
       self.assertNotIn('No forward-looking explicit guidance was provided.',result['limitations'])
       with store.db() as c:

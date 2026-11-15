@@ -15,6 +15,7 @@ import seed
 from diagnostics import failure
 from pypdf import PdfReader
 from research import research
+from ai_provider import configuration
 
 QUESTIONS=[
  'What are the main businesses and segments, and what drives demand?',
@@ -87,7 +88,8 @@ def evaluate(symbols,question_indexes=None):
 def verify(manifest,include_historical,symbols):
     """Run the live acceptance sequence, stopping early on a blocked runtime."""
     checks=[]
-    for host in ('www.screener.in','api.openai.com','www.nseindia.com','query1.finance.yahoo.com'):
+    model_host='api.openai.com' if configuration()['provider']=='openai' else 'generativelanguage.googleapis.com'
+    for host in ('www.screener.in',model_host,'www.nseindia.com','query1.finance.yahoo.com'):
         try:
             socket.getaddrinfo(host,443,type=socket.SOCK_STREAM)
             checks.append({'host':host,'status':'resolved'})
@@ -130,8 +132,8 @@ def main():
     if args.question_index and args.command!='evaluate':parser.error('--question-index is only supported for evaluate')
     store.init();seed.seed()
     if args.command=='status':
-        import os
-        result={'ai_configured':bool(os.getenv('OPENAI_API_KEY')),'model':os.getenv('FINN_MODEL','gpt-4o-mini'),'coverage':[store.coverage(s) for s in args.symbols],'sources':monitoring.source_health()}
+        ai=configuration()
+        result={'ai_configured':ai['configured'],'provider':ai['provider'],'model':ai['model'],'review_model':ai['review_model'],'coverage':[store.coverage(s) for s in args.symbols],'sources':monitoring.source_health()}
     elif args.command=='prepare':result=prepare(args.manifest,args.include_historical,args.local_dir)
     elif args.command=='acquire':
         from acquisition import acquire
