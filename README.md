@@ -33,7 +33,7 @@ An API key is optional. Without one, Research returns source passages and PDF li
 
 The default model is `gemini-3.6-flash`. Each uncached answer has two model passes, with up to three HTTP attempts per pass for temporary server failures; a quota or validation failure returns source evidence. FINN never switches to OpenAI automatically. Free API access has usage limits and depends on your Google project's eligibility. Keep billing disabled if you want no API charges. Google may use free-tier inputs and outputs to improve its products; questions and selected document passages are sent, while contact profiles stay local.
 
-OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI; Gemini needs its own live evaluation once your key is configured.
+OpenAI remains available only through an explicit `FINN_AI_PROVIDER=openai` setting. The earlier twelve-question evaluation used OpenAI. Gemini 3.6 has now passed a live filing smoke check, with both findings checked against their original PDF pages; its broader company evaluation is still pending.
 
 ## How it works
 

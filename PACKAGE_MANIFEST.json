@@ -26,13 +26,13 @@
   },
   {
     "path": "README.md",
-    "bytes": 7508,
-    "sha256": "899359c393ffad50263cdead98268b3983b63abb691b7ad272c4538f29c54f72"
+    "bytes": 7605,
+    "sha256": "540f83c62d7c8951033eb122368831a22cda652818d1ca6168dbc32b1688c828"
   },
   {
     "path": "VERIFICATION.md",
-    "bytes": 13903,
-    "sha256": "48a83d4debd14b10b3eceaa5cd88f830d9fa321ea0c4cd9d27374b0714057fad"
+    "bytes": 14254,
+    "sha256": "448a99e4793162d58b48493efc860694120d419c00a156fc27e9231cd2740ba0"
   },
   {
     "path": "access.py",
@@ -72,7 +72,7 @@
   {
     "path": "demo_data/public.sqlite3",
     "bytes": 14065664,
-    "sha256": "a534ba74ce58d75c305f643587de075b1af49e9c08065f8e60a08d34602c4b13"
+    "sha256": "fa968d2ea7b6d388e6144d47f19c2bbec7da25c7a164a0d3541ba0844efa22a1"
   },
   {
     "path": "demo_documents/BAJFINANCE.pdf",
@@ -206,8 +206,8 @@
   },
   {
     "path": "docs/DEMO.md",
-    "bytes": 4340,
-    "sha256": "aa849f7889461aa80beb3b04afc3ca50b86027647c967157afebda4270443bbe"
+    "bytes": 4415,
+    "sha256": "9fdfea1fead17986c9ea01b38b42736d4d56997f77d80060e866743df93fc024"
   },
   {
     "path": "docs/DEPLOYMENT.md",
@@ -216,13 +216,13 @@
   },
   {
     "path": "docs/EVALUATION.md",
-    "bytes": 8366,
-    "sha256": "8e412591570349b7a143faa576aa98d73c5198205131dade245112a182ae3523"
+    "bytes": 8724,
+    "sha256": "d7e764ecc19328434835493668cfc128d53025c8d3279c4d6b19f90924e41685"
   },
   {
     "path": "docs/GEMINI.md",
-    "bytes": 8229,
-    "sha256": "7f94b0c0d0d62a3178a3a084efdeb834c53c8888768d4bd57ef373e922c3ce3c"
+    "bytes": 8471,
+    "sha256": "143a22811af0270a41ac8621f43c6a8c8b39366f940a5f6a2417ad2e3ecb7e4d"
   },
   {
     "path": "docs/SOURCE_DISCOVERY.md",
@@ -231,8 +231,8 @@
   },
   {
     "path": "docs/SUBMISSION_EMAIL.md",
-    "bytes": 3122,
-    "sha256": "a79106c83f106487c0c553f03c262c3e0190ea899bd9a66f554d0c9b4ede51f7"
+    "bytes": 3197,
+    "sha256": "44177c457c0c5702ccb5140a7094a5595b8c9343473ff332f6fe48bbf0b539c5"
   },
   {
     "path": "examples/announcement_sources.json",
