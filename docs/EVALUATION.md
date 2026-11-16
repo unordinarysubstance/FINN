@@ -1,5 +1,7 @@
 # Research evaluation record
 
+Latest submission checks: [FINAL_STATUS.md](FINAL_STATUS.md). Historical runs below retain their actual outcomes.
+
 Checked 12 November 2026. Four companies, three questions each: business/segments, management outlook/margins, and cash flow/profit/working capital/debt.
 
 ## Latest real batch

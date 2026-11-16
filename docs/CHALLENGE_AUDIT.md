@@ -1,5 +1,7 @@
 # Challenge requirement audit — submission review
 
+Latest submission checks: [FINAL_STATUS.md](FINAL_STATUS.md). Historical runs below retain their actual outcomes.
+
 Checked against all five pages of `1. ENAM_Founding AI Engineer Build Challenge_Main.pdf`. The brief requires a focused working prototype with Push, Pull and Network; its long feature menus are explicitly optional.
 
 ## Required product and data

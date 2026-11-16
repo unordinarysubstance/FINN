@@ -1,5 +1,7 @@
 # Verification — updated 15 November 2026
 
+Latest submission checks: [FINAL_STATUS.md](docs/FINAL_STATUS.md). Historical runs below retain their actual outcomes.
+
 ## Current result
 
 The integrated local prototype works with public source documents, optional two-pass AI, source-aware monitoring, persistent alerts and synthetic contacts. Chrome checks passed at desktop and phone widths. The submission bundle starts from a clean extraction with a ready-to-search public corpus. The owner confirmed hosted readiness, login, original PDF access, research citations and Network search at https://finn-rzzb.onrender.com/. The owner's GitHub CLI confirmed the repository is public; the actual build-history attachment and covering note are now prepared privately; final live checks, latest publication/deployment and sending remain.
