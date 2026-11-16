@@ -21,18 +21,18 @@
   },
   {
     "path": "IMPLEMENTATION_PLAN.md",
-    "bytes": 16084,
-    "sha256": "764fcdb6306e6bc35935bd7161a7939c788c87f388e6f9f313f60a48dff0aac9"
+    "bytes": 16571,
+    "sha256": "39b837fa8b2b8f010201a813beac3f49859cc7b92ac4701142de8a69a0ab9784"
   },
   {
     "path": "README.md",
-    "bytes": 7984,
-    "sha256": "966e1d3d85927b69aadade975165c16ed6ce7a0c3f03b240ebf07337dcc1b054"
+    "bytes": 8024,
+    "sha256": "5e8f44e463911f1cc0ff7657e12fa632197d576e53aba6ba88da9b9d811bf8d0"
   },
   {
     "path": "VERIFICATION.md",
-    "bytes": 16584,
-    "sha256": "dbbea742717420cc1cc643aa0c1616a8e191f4fcbf5b17105f949c26e3598851"
+    "bytes": 18227,
+    "sha256": "bc7d930705b2cf529e8513a7ff97926536fab9cad40fcdc1c90163767b84a57d"
   },
   {
     "path": "access.py",
@@ -72,7 +72,7 @@
   {
     "path": "demo_data/public.sqlite3",
     "bytes": 14065664,
-    "sha256": "34f724f5e998e0c9d9a2f331807f30500448c4b56f51f146388cd99f986815d7"
+    "sha256": "9497e9953b650e97bcb97b4d1f0c7a3890f2b6216472b9a0df5f18f5002b030c"
   },
   {
     "path": "demo_documents/BAJFINANCE.pdf",
@@ -200,9 +200,14 @@
     "sha256": "d05bc2840a397a5c8e17e9c3159ba8d7f5e9b289372a204aae55fbbd398054dd"
   },
   {
+    "path": "docs/ARCHITECTURE.md",
+    "bytes": 6542,
+    "sha256": "8559aff2a7036dcdbd945d1a7b841a0896e4feb1b24ce9d42b4fb8912e9c1c27"
+  },
+  {
     "path": "docs/CHALLENGE_AUDIT.md",
-    "bytes": 6419,
-    "sha256": "d8632edc23fd20f1045d4924a919412b845786791a4b9ffb6b40a457166cb53d"
+    "bytes": 6797,
+    "sha256": "596cd720c6387f39f66a1f9d796e623f0c90066d985387ee75c0de21d45f983d"
   },
   {
     "path": "docs/DEMO.md",
@@ -211,8 +216,8 @@
   },
   {
     "path": "docs/DEPLOYMENT.md",
-    "bytes": 6364,
-    "sha256": "ded5d1f15148c88fd6b9ab13ca0a8966b3a79092e6ab2566b00f14632d48e963"
+    "bytes": 8130,
+    "sha256": "416962d465f66fabb4dc2b528907a5eb3c9adbb1dd00308d654070efc3589ca1"
   },
   {
     "path": "docs/EVALUATION.md",
@@ -231,8 +236,8 @@
   },
   {
     "path": "docs/SUBMISSION_EMAIL.md",
-    "bytes": 3426,
-    "sha256": "bd1ba2c3d4e81d63b95fa247fd15577fba46f7cf53d920a229675b54af490a3c"
+    "bytes": 3385,
+    "sha256": "1492d6459965b090aaa3a3f8ce3b162d3c64af1eb64e90694be066a066956ad7"
   },
   {
     "path": "examples/announcement_sources.json",

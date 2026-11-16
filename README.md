@@ -2,7 +2,7 @@
 
 FINN is an investment research app built for the ENAM Founding AI Engineer challenge. It brings together portfolio announcements, company documents and the people in an investor’s network who might help explain what is happening.
 
-[Open the demo](https://finn-rzzb.onrender.com/) · [Requirement audit](docs/CHALLENGE_AUDIT.md)
+[Open the demo](https://finn-rzzb.onrender.com/) · [Requirement audit](docs/CHALLENGE_AUDIT.md) · [Architecture](docs/ARCHITECTURE.md)
 
 The demo uses a shared login; access details are shared separately with evaluators. It runs on Render Free, so saved events, settings and extra downloads can reset when the service sleeps or restarts. The bundled company documents are restored on startup. A notice in the app explains this.
 

@@ -1,26 +1,28 @@
 To: assessment@enam.com
 Subject: IIT Kanpur – Founding AI Engineer - 2027
+Attachment: FINN_AI_BUILD_HISTORY.zip
 
-Draft: add your name, actual AI-session links/exports and the demo password directly in the submission email. Confirm repository visibility before sending. No email has been sent.
+Submission draft: add the demo password privately in the email. The actual redacted history attachment is prepared under data/verification/submission/. No email has been sent.
 
 Hello ENAM team,
 
-I’m submitting FINN, a mobile-first investment research app that connects a portfolio event to the original company document and someone in the investor’s network who might help explain it.
+I'm submitting FINN, a phone-friendly investment research prototype built around one journey: notice a portfolio event, open the company's evidence, and find someone in your network who can help explain it.
 
-Prototype: https://finn-rzzb.onrender.com/
-Login: finn — [PROVIDE THE DEMO PASSWORD PRIVATELY IN THE EMAIL]
-Repository: https://github.com/unordinarysubstance/FINN
-AI build history: [ACTUAL SESSION SHARE LINKS OR ATTACHED EXPORTS]
+Demo: https://finn-rzzb.onrender.com/
+Username: finn
+Password: [ADD THE RENDER DEMO PASSWORD PRIVATELY IN THIS EMAIL]
+Public repository: https://github.com/unordinarysubstance/FINN
+AI build history: attached FINN_AI_BUILD_HISTORY.zip, exported from the actual coding conversation with credential redactions.
 
-The app follows eighteen companies, prioritises announcements and creates in-app alerts for configured categories and unusual end-of-day price/volume moves. Research accepts NSE company tickers beyond the demo set, acquires available annual reports and call transcripts, and links findings to original PDF pages. Synthetic contacts appear inside events and research, with reasons to reach out and explicitly recorded second-degree introductions. Contacts can also be searched directly or imported as JSON; I did not scrape LinkedIn.
+FINN follows eighteen companies. Briefing prioritises announcements and creates in-app alerts for configured event categories or unusual completed-session price/volume changes. Research accepts NSE tickers beyond the demo set, acquires available issuer annual reports and call transcripts, and links findings to original PDF pages. Network suggestions appear inside events and research, with reasons and explicit second-degree paths. The ten demo contacts are synthetic; I did not scrape LinkedIn.
 
-The backend is FastAPI with SQLite/FTS5, original PDF files and a plain JavaScript frontend. Optional AI analysis now uses Gemini Flash for drafting and evidence review, bounded to two passes (with limited transient-server retries) and cached against the exact evidence, provider and model configuration. Gemini 3.6 Flash passed its live filing smoke check, and both findings were checked against the original PDF pages; its first broader evaluation passed 2/12. Pipeline 8 added pacing and strict response schemas; five questions now pass structurally, with the remainder blocked by the project's 20-request daily allowance. Full evaluation and source review remain incomplete. Earlier Gemini 3.8 requests encountered overload/timeouts; the recorded historical evaluation used gpt-4o-mini and gpt-6.1-sol. Source-line checks and deterministic financial arithmetic constrain the model; network profiles are not sent to it.
+The backend is FastAPI with SQLite/FTS5 and original PDF files; the frontend is plain JavaScript. Acquisition, financial arithmetic, alert rules and contact matching are deterministic code. Gemini 3.6 Flash drafts research and checks it in a second pass; Python validates its source-line references and numerical literals. Both passes use scoped primary evidence, and no contact profiles are sent to the model. Exact-evidence caching and request pacing keep the free-tier API usable. Google's free-tier data terms remain a limit for confidential questions/uploads.
 
-The hosted demo uses Render Free with a shared password gate. It works without a model key in evidence mode, and user changes can reset when the service sleeps or restarts; bundled public documents restore automatically. Monitoring runs only while the backend is awake. A production version would need durable storage, per-investor ownership, individual authentication and consent/deletion controls.
+The current Gemini filing smoke passed, with both findings checked against original pages. Five company research answers passed structural checks, and their 35 support spans match the original PDFs; the remaining full-batch checks were previously blocked by the daily free quota and still need the resumed run. The automated suite passes 135 tests. Desktop/phone-width browser checks, new-company acquisition, all eighteen price feeds and core hosted workflows have also been exercised. The verification notes distinguish these checks from factual completeness.
 
-Validation includes 135 passing tests, desktop/phone-width browser checks, live acquisition for HDFC Bank and Maruti, all eighteen price feeds and owner-confirmed hosted workflows. The historical OpenAI twelve-answer evaluation passed structural checks, while source inspection recorded incomplete answers and reviewer mistakes. Announcement coverage is partial when NSE denies access. The Reliance numeric parser supports one reviewed filing; it is not a general table extractor. I left out the four-quarter promise tracker, executive biographies and outbound notifications to keep the main journey working.
+I chose Render Free to keep the prototype at zero hosting cost. It can sleep and reset runtime files; bundled documents restore automatically, and the app explains that limitation. The shared login protects this demo workspace, not separate investors. A production version needs durable storage, individual accounts, per-investor ownership, consent/deletion controls and ingestion workers that run independently of the web app. Announcement coverage remains partial when exchange endpoints deny access.
 
-The design builds on CS787 AlphaAgents by Aamir Ahmad, Aaryan Maheshwari, Aviral Gupta, Pallav Rastogi and Suyash Kapoor. FINN is separate code with a smaller research pipeline; the original project and attribution are preserved.
+I deliberately left out a general financial-table extractor, a four-quarter promise tracker, executive biographies and outbound notifications. I'd improve source coverage and durable/private workspaces before expanding that menu. The repository's architecture note explains the pipelines and tradeoffs. FINN builds on the CS787 AlphaAgents project; its original team and attribution are preserved.
 
 Regards,
-[YOUR NAME]
+Aaryan Maheshwari

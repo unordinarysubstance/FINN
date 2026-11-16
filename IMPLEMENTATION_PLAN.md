@@ -10,6 +10,8 @@ Implementation checkpoint (12 November 2026): four annual reports and eight tran
 
 13 November requirement audit: added automatic new-ticker primary acquisition, official NSE RSS fallback, shared hosted-demo access, readiness and Render configuration. See docs/CHALLENGE_AUDIT.md for mandatory versus optional scope and exact pending delivery checks. Initial private GitHub push confirmed; visibility remains private by user instruction.
 
+Submission checkpoint: the source, live demo and required Push/Pull/Network workflows have been built. Current acceptance and limits are in VERIFICATION.md and docs/CHALLENGE_AUDIT.md. The remaining delivery work is the final live Gemini evaluation, pushing the reviewed latest commit, updating the existing Render service, and sending the covering email with the actual redacted build-history attachment. The initial-state inventory below is preserved as history.
+
 ## 1. Objective and current state
 
 Complete a focused, reliable FINN prototype demonstrating:
@@ -26,7 +28,7 @@ The challenge requires at least one working workflow in each of Push, Pull, and 
 - Challenge specification: 1. ENAM_Founding AI Engineer Build Challenge_Main.pdf
 - Preserve the original CS787 project and acknowledge its team in the submission.
 
-### Verified current state
+### Initial verified state — 11 November 2026
 
 - FastAPI application runs at http://127.0.0.1:8000.
 - Mobile-responsive frontend has Briefing, Research, Network, and Portfolio views.

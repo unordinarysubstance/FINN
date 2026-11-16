@@ -1,4 +1,4 @@
-# Challenge requirement audit — 13 November 2026
+# Challenge requirement audit — submission review
 
 Checked against all five pages of `1. ENAM_Founding AI Engineer Build Challenge_Main.pdf`. The brief requires a focused working prototype with Push, Pull and Network; its long feature menus are explicitly optional.
 
@@ -22,14 +22,14 @@ Checked against all five pages of `1. ENAM_Founding AI Engineer Build Challenge_
 
 | Requirement | Current state |
 | --- | --- |
-| Pipelines and source linking | README architecture diagram, module descriptions, provenance and event/contact integration. |
+| Pipelines and source linking | README plus ARCHITECTURE.md describe the pipelines, diagram, provenance and event/contact integration. |
 | Privacy, retention and real consent/access control | README/DEPLOYMENT explain storage, model inputs, persistence, consent/deletion and ownership gaps. New shared-demo password gate protects UI/documents/APIs; it is not multi-user isolation. |
 | Models, agents, cost and efficiency | Two bounded model passes, configurable routing, evidence/model-aware cache, measured usage and quality limits in EVALUATION.md. |
 | Cloud choices | User-selected Free Render Blueprint: no disk, temporary runtime, generated access secret and readiness route. Reset behavior is visible. Free deployment is live at https://finn-rzzb.onrender.com/ with owner-confirmed core workflows. |
 | Phone-accessible delivered prototype | Local responsive app and portable corpus work. Hosted URL: https://finn-rzzb.onrender.com/; core workflows confirmed by the owner. |
-| Public GitHub repository | The implementation and free-hosting updates through 3c5b063 were pushed to `unordinarysubstance/FINN`. Final documentation updates require push. The owner has now authorized public visibility; the CLI change and final visibility confirmation are pending. |
-| Actual AI build history | Real conversation exports/share links still need to be supplied; no synthetic build log is substituted. |
-| Covering email | Draft at SUBMISSION_EMAIL.md; fill actual hosted URL, build-history links and final visibility/access details. Sending requires explicit instruction. |
+| Public GitHub repository | The authenticated owner CLI confirmed `unordinarysubstance/FINN` is public. Publication uses the GitHub CLI with a full-history credential/public-corpus audit and remote-commit verification. Confirm the final reviewed version is on main before sending the email. No force push is required. |
+| Actual AI build history | A genuine redacted export of the recorded FINN Codex conversation is prepared privately as FINN_AI_BUILD_HISTORY.zip. It contains visible user/assistant messages, with credentials and local home paths redacted; hidden instructions/reasoning and tool payloads are omitted. Attach the actual export; it is excluded from the public repository. |
+| Covering email | The covering note uses the actual hosted/repository links, Aaryan Maheshwari as the configured author, and the prepared history attachment. The owner must add the shared demo password privately in the email and send it. No email has been sent. |
 
 ## Optional examples deliberately left out
 
